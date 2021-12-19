@@ -4,7 +4,7 @@
 >
 > THE CODE IS FOR EDUCATIONAL AND DEMONSTRATION PURPOSES ONLY.
 >
-> USE AT YOUR OWN RISK. PLEASE REPORT ANY [ISSUES ON GITHUB](https://github.com/citycoins/integrations/issues).
+> USE AT YOUR OWN RISK. PLEASE REPORT ANY [ISSUES ON GITHUB](https://github.com/citycoins/scripts/issues).
 
 This directory provides a set of Node.js scripts to interact with the CityCoins protocol, starting with the AutoMiner utility.
 
@@ -53,15 +53,15 @@ The value for `private` is needed for the AutoMiner to be able to send the trans
 Clone this repository using either `ssh` or `https`:
 
 ```bash
-git clone git@github.com:citycoins/integrations.git
+git clone git@github.com:citycoins/scripts.git
 OR
-git clone https://github.com/citycoins/integrations.git
+git clone https://github.com/citycoins/scripts.git
 ```
 
 Enter the directory for the AutoMiner and install the prequisites:
 
 ```bash
-cd integrations/scripts
+cd scripts
 npm install
 ```
 
