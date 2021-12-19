@@ -1,0 +1,14 @@
+{
+  "name": "citycoins-scripts",
+  "description": "Simple command-line tools for interacting with the CityCoins protocol",
+  "version": "1.0.0",
+  "license": "GPLV3",
+  "type": "module",
+  "dependencies": {
+    "@stacks/network": "^3.0.0",
+    "@stacks/transactions": "^3.1.0",
+    "bn.js": "^5.2.0",
+    "chalk": "^5.0.0",
+    "prompts": "^2.4.2"
+  }
+}
