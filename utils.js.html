@@ -1,4 +1,48 @@
-import chalk from "chalk";
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    
+    <meta charset="utf-8">
+    <title>utils.js - Documentation</title>
+    
+    
+    <script src="scripts/prettify/prettify.js"></script>
+    <script src="scripts/prettify/lang-css.js"></script>
+    <!--[if lt IE 9]>
+      <script src="//html5shiv.googlecode.com/svn/trunk/html5.js"></script>
+    <![endif]-->
+    <link type="text/css" rel="stylesheet" href="styles/prettify.css">
+    <link type="text/css" rel="stylesheet" href="styles/jsdoc.css">
+    <script src="scripts/nav.js" defer></script>
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+</head>
+<body>
+
+<input type="checkbox" id="nav-trigger" class="nav-trigger" />
+<label for="nav-trigger" class="navicon-button x">
+  <div class="navicon"></div>
+</label>
+
+<label for="nav-trigger" class="overlay"></label>
+
+<nav >
+    
+    <h2><a href="index.html">Home</a></h2><h3>Modules</h3><ul><li><a href="module-AutoMiner.html">AutoMiner</a><ul class='methods'><li data-type='method'><a href="module-AutoMiner.html#~autoMine">autoMine</a></li><li data-type='method'><a href="module-AutoMiner.html#~cancel">cancel</a></li><li data-type='method'><a href="module-AutoMiner.html#~promptFeeStrategy">promptFeeStrategy</a></li><li data-type='method'><a href="module-AutoMiner.html#~promptMiningStrategy">promptMiningStrategy</a></li><li data-type='method'><a href="module-AutoMiner.html#~promptUserConfig">promptUserConfig</a></li></ul></li><li><a href="module-Utilities.html">Utilities</a><ul class='methods'><li data-type='method'><a href="module-Utilities.html#~exitWithError">exitWithError</a></li><li data-type='method'><a href="module-Utilities.html#~getAccountTxs">getAccountTxs</a></li><li data-type='method'><a href="module-Utilities.html#~getBlockAvg">getBlockAvg</a></li><li data-type='method'><a href="module-Utilities.html#~getBlockCommit">getBlockCommit</a></li><li data-type='method'><a href="module-Utilities.html#~getBlockHeight">getBlockHeight</a></li><li data-type='method'><a href="module-Utilities.html#~getMiningStatsAtBlock">getMiningStatsAtBlock</a></li><li data-type='method'><a href="module-Utilities.html#~getNonce">getNonce</a></li><li data-type='method'><a href="module-Utilities.html#~getOptimalFee">getOptimalFee</a></li><li data-type='method'><a href="module-Utilities.html#~getStxBalance">getStxBalance</a></li><li data-type='method'><a href="module-Utilities.html#~getTotalMempoolTx">getTotalMempoolTx</a></li><li data-type='method'><a href="module-Utilities.html#~printDivider">printDivider</a></li><li data-type='method'><a href="module-Utilities.html#~printTimeStamp">printTimeStamp</a></li><li data-type='method'><a href="module-Utilities.html#~processTx">processTx</a></li><li data-type='method'><a href="module-Utilities.html#~timer">timer</a></li><li data-type='method'><a href="module-Utilities.html#~waitUntilBlock">waitUntilBlock</a></li></ul></li></ul>
+</nav>
+
+<div id="main">
+    
+    <h1 class="page-title">utils.js</h1>
+    
+
+    
+
+
+
+    
+    <section>
+        <article>
+            <pre class="prettyprint source linenums"><code>import chalk from "chalk";
 import { StacksMainnet } from "@stacks/network";
 import { callReadOnlyFunction, cvToJSON, uintCV } from "@stacks/transactions";
 
@@ -76,7 +120,7 @@ export async function processTx(broadcastedResult, tx) {
     // temporarily 5min for testing
     await timer(300000);
     count++;
-  } while (count < countLimit);
+  } while (count &lt; countLimit);
 
   console.log(warning(`reached retry limit, check tx`));
   console.log(`https://explorer.stacks.co/txid/${txResult.tx_id}`);
@@ -160,7 +204,7 @@ export async function getAccountTxs(address) {
 
   // obtain all account transactions 50 at a time
   do {
-    url = `${stxApi}/extended/v1/address/${address}/transactions?limit=${limit}&offset=${counter}`;
+    url = `${stxApi}/extended/v1/address/${address}/transactions?limit=${limit}&amp;offset=${counter}`;
     const response = await fetch(url);
     if (response.status === 200) {
       // success
@@ -185,7 +229,7 @@ export async function getAccountTxs(address) {
     }
     // pause for 1sec, avoid rate limiting
     await timer(1000);
-  } while (counter < total);
+  } while (counter &lt; total);
 
   // view the output
   //console.log(JSON.stringify(txResults));
@@ -201,7 +245,7 @@ export async function getAccountTxs(address) {
  * @returns {integer} Optimal fee in uSTX
  */
 export async function getOptimalFee(multiplier) {
-  const url = `${STACKS_NETWORK.coreApiUrl}/extended/v1/tx?limit=200&unanchored=true`;
+  const url = `${STACKS_NETWORK.coreApiUrl}/extended/v1/tx?limit=200&amp;unanchored=true`;
   const result = await fetch(url);
   const resultJson = await result.json();
   const sum = resultJson.results
@@ -272,7 +316,7 @@ async function getBlockAvg(
 
   for (
     let i = currentBlock;
-    direction > 0 ? i < targetBlock : i > targetBlock;
+    direction > 0 ? i &lt; targetBlock : i > targetBlock;
     direction > 0 ? i++ : i--
   ) {
     const result = await getMiningStatsAtBlock(
@@ -389,7 +433,7 @@ export async function waitUntilBlock(userConfig) {
     );
     console.log(`currentBlock: ${currentBlock}`);
     console.log(`targetBlock: ${userConfig.targetBlockHeight}`);
-    if (currentBlock < userConfig.targetBlockHeight) {
+    if (currentBlock &lt; userConfig.targetBlockHeight) {
       console.log(
         `distance: ${userConfig.targetBlockHeight - currentBlock} blocks to go`
       );
@@ -410,3 +454,28 @@ export async function waitUntilBlock(userConfig) {
 
   return true;
 }
+</code></pre>
+        </article>
+    </section>
+
+
+
+
+    
+    
+</div>
+
+<br class="clear">
+
+<footer>
+    Documentation generated by <a href="https://github.com/jsdoc3/jsdoc">JSDoc 3.6.7</a> on Sun Dec 19 2021 15:51:16 GMT+0000 (Coordinated Universal Time) using the <a href="https://github.com/clenemt/docdash">docdash</a> theme.
+</footer>
+
+<script>prettyPrint();</script>
+<script src="scripts/polyfill.js"></script>
+<script src="scripts/linenumber.js"></script>
+
+
+
+</body>
+</html>

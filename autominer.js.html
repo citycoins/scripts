@@ -1,4 +1,48 @@
-import BN from "bn.js";
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    
+    <meta charset="utf-8">
+    <title>autominer.js - Documentation</title>
+    
+    
+    <script src="scripts/prettify/prettify.js"></script>
+    <script src="scripts/prettify/lang-css.js"></script>
+    <!--[if lt IE 9]>
+      <script src="//html5shiv.googlecode.com/svn/trunk/html5.js"></script>
+    <![endif]-->
+    <link type="text/css" rel="stylesheet" href="styles/prettify.css">
+    <link type="text/css" rel="stylesheet" href="styles/jsdoc.css">
+    <script src="scripts/nav.js" defer></script>
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+</head>
+<body>
+
+<input type="checkbox" id="nav-trigger" class="nav-trigger" />
+<label for="nav-trigger" class="navicon-button x">
+  <div class="navicon"></div>
+</label>
+
+<label for="nav-trigger" class="overlay"></label>
+
+<nav >
+    
+    <h2><a href="index.html">Home</a></h2><h3>Modules</h3><ul><li><a href="module-AutoMiner.html">AutoMiner</a><ul class='methods'><li data-type='method'><a href="module-AutoMiner.html#~autoMine">autoMine</a></li><li data-type='method'><a href="module-AutoMiner.html#~cancel">cancel</a></li><li data-type='method'><a href="module-AutoMiner.html#~promptFeeStrategy">promptFeeStrategy</a></li><li data-type='method'><a href="module-AutoMiner.html#~promptMiningStrategy">promptMiningStrategy</a></li><li data-type='method'><a href="module-AutoMiner.html#~promptUserConfig">promptUserConfig</a></li></ul></li><li><a href="module-Utilities.html">Utilities</a><ul class='methods'><li data-type='method'><a href="module-Utilities.html#~exitWithError">exitWithError</a></li><li data-type='method'><a href="module-Utilities.html#~getAccountTxs">getAccountTxs</a></li><li data-type='method'><a href="module-Utilities.html#~getBlockAvg">getBlockAvg</a></li><li data-type='method'><a href="module-Utilities.html#~getBlockCommit">getBlockCommit</a></li><li data-type='method'><a href="module-Utilities.html#~getBlockHeight">getBlockHeight</a></li><li data-type='method'><a href="module-Utilities.html#~getMiningStatsAtBlock">getMiningStatsAtBlock</a></li><li data-type='method'><a href="module-Utilities.html#~getNonce">getNonce</a></li><li data-type='method'><a href="module-Utilities.html#~getOptimalFee">getOptimalFee</a></li><li data-type='method'><a href="module-Utilities.html#~getStxBalance">getStxBalance</a></li><li data-type='method'><a href="module-Utilities.html#~getTotalMempoolTx">getTotalMempoolTx</a></li><li data-type='method'><a href="module-Utilities.html#~printDivider">printDivider</a></li><li data-type='method'><a href="module-Utilities.html#~printTimeStamp">printTimeStamp</a></li><li data-type='method'><a href="module-Utilities.html#~processTx">processTx</a></li><li data-type='method'><a href="module-Utilities.html#~timer">timer</a></li><li data-type='method'><a href="module-Utilities.html#~waitUntilBlock">waitUntilBlock</a></li></ul></li></ul>
+</nav>
+
+<div id="main">
+    
+    <h1 class="page-title">autominer.js</h1>
+    
+
+    
+
+
+
+    
+    <section>
+        <article>
+            <pre class="prettyprint source linenums"><code>import BN from "bn.js";
 import prompts from "prompts";
 import {
   getBlockHeight,
@@ -86,7 +130,7 @@ async function promptUserConfig() {
       name: "numberOfRuns",
       message: "Number of mining TX to send?",
       validate: (value) => {
-        if (value < 1) return "Value must be 1 or greater";
+        if (value &lt; 1) return "Value must be 1 or greater";
         return true;
       },
     },
@@ -95,7 +139,7 @@ async function promptUserConfig() {
       name: "numberOfBlocks",
       message: "Number of blocks to mine per TX? (1-200)",
       validate: (value) =>
-        value < 1 || value > 200 ? "Value must be between 1 and 200" : true,
+        value &lt; 1 || value > 200 ? "Value must be between 1 and 200" : true,
     },
     {
       type: "confirm",
@@ -108,7 +152,7 @@ async function promptUserConfig() {
       name: "targetBlockHeight",
       message: `Target block height? (current: ${currentBlockHeight})`,
       validate: (value) =>
-        value < currentBlockHeight
+        value &lt; currentBlockHeight
           ? `Value must be equal to or greater than current block height: ${currentBlockHeight}`
           : true,
     },
@@ -170,7 +214,7 @@ async function promptMiningStrategy() {
       name: "strategyDistance",
       message: "Number of blocks to search for strategy?",
       validate: (value) => {
-        if (value < 1 || value > 100) return "Value must be between 1 and 100";
+        if (value &lt; 1 || value > 100) return "Value must be between 1 and 100";
         return true;
       },
     },
@@ -180,7 +224,7 @@ async function promptMiningStrategy() {
       message: "Target percentage of total block commit?",
       validate: (value) => {
         if (value === "") return "Target percentage is required";
-        if (value < 1 || value > 100) return "Value must be between 1 and 100";
+        if (value &lt; 1 || value > 100) return "Value must be between 1 and 100";
         return true;
       },
     },
@@ -251,11 +295,11 @@ async function autoMine(userConfig, miningStrategy = {}, firstRun = true) {
 
   // set number of runs, 0 if continuous
   const numberOfRuns =
-    userConfig.autoMine && userConfig.autoMineConfirm
+    userConfig.autoMine &amp;&amp; userConfig.autoMineConfirm
       ? 0
       : userConfig.numberOfRuns;
 
-  if (userConfig.startNow && firstRun === true) {
+  if (userConfig.startNow &amp;&amp; firstRun === true) {
     // set block height to start tx on first run
     userConfig.targetBlockHeight = await getBlockHeight().catch((err) =>
       exitWithError(`getBlockHeight err: ${err}`)
@@ -287,8 +331,8 @@ async function autoMine(userConfig, miningStrategy = {}, firstRun = true) {
   } else {
     // check if strategy already exists and if not set it
     if (
-      !miningStrategy.hasOwnProperty("strategyDistance") &&
-      !miningStrategy.hasOwnProperty("targetPercentage") &&
+      !miningStrategy.hasOwnProperty("strategyDistance") &amp;&amp;
+      !miningStrategy.hasOwnProperty("targetPercentage") &amp;&amp;
       !miningStrategy.hasOwnProperty("maxCommitBlock")
     ) {
       printDivider();
@@ -448,7 +492,7 @@ async function autoMine(userConfig, miningStrategy = {}, firstRun = true) {
     let mineManyArray = [];
 
     // create the clarity values for the mining tx
-    for (let i = 0; i < userConfig.numberOfBlocks; i++) {
+    for (let i = 0; i &lt; userConfig.numberOfBlocks; i++) {
       mineManyArray.push(uintCV(commit));
     }
     const sumCV = uintCV(commit * userConfig.numberOfBlocks);
@@ -542,3 +586,28 @@ printDivider();
 promptUserConfig().then((answers) => {
   autoMine(answers);
 });
+</code></pre>
+        </article>
+    </section>
+
+
+
+
+    
+    
+</div>
+
+<br class="clear">
+
+<footer>
+    Documentation generated by <a href="https://github.com/jsdoc3/jsdoc">JSDoc 3.6.7</a> on Sun Dec 19 2021 15:51:16 GMT+0000 (Coordinated Universal Time) using the <a href="https://github.com/clenemt/docdash">docdash</a> theme.
+</footer>
+
+<script>prettyPrint();</script>
+<script src="scripts/polyfill.js"></script>
+<script src="scripts/linenumber.js"></script>
+
+
+
+</body>
+</html>

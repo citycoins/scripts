@@ -1,0 +1,249 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    
+    <meta charset="utf-8">
+    <title>Home - Documentation</title>
+    
+    
+    <script src="scripts/prettify/prettify.js"></script>
+    <script src="scripts/prettify/lang-css.js"></script>
+    <!--[if lt IE 9]>
+      <script src="//html5shiv.googlecode.com/svn/trunk/html5.js"></script>
+    <![endif]-->
+    <link type="text/css" rel="stylesheet" href="styles/prettify.css">
+    <link type="text/css" rel="stylesheet" href="styles/jsdoc.css">
+    <script src="scripts/nav.js" defer></script>
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+</head>
+<body>
+
+<input type="checkbox" id="nav-trigger" class="nav-trigger" />
+<label for="nav-trigger" class="navicon-button x">
+  <div class="navicon"></div>
+</label>
+
+<label for="nav-trigger" class="overlay"></label>
+
+<nav >
+    
+    <h2><a href="index.html">Home</a></h2><h3>Modules</h3><ul><li><a href="module-AutoMiner.html">AutoMiner</a><ul class='methods'><li data-type='method'><a href="module-AutoMiner.html#~autoMine">autoMine</a></li><li data-type='method'><a href="module-AutoMiner.html#~cancel">cancel</a></li><li data-type='method'><a href="module-AutoMiner.html#~promptFeeStrategy">promptFeeStrategy</a></li><li data-type='method'><a href="module-AutoMiner.html#~promptMiningStrategy">promptMiningStrategy</a></li><li data-type='method'><a href="module-AutoMiner.html#~promptUserConfig">promptUserConfig</a></li></ul></li><li><a href="module-Utilities.html">Utilities</a><ul class='methods'><li data-type='method'><a href="module-Utilities.html#~exitWithError">exitWithError</a></li><li data-type='method'><a href="module-Utilities.html#~getAccountTxs">getAccountTxs</a></li><li data-type='method'><a href="module-Utilities.html#~getBlockAvg">getBlockAvg</a></li><li data-type='method'><a href="module-Utilities.html#~getBlockCommit">getBlockCommit</a></li><li data-type='method'><a href="module-Utilities.html#~getBlockHeight">getBlockHeight</a></li><li data-type='method'><a href="module-Utilities.html#~getMiningStatsAtBlock">getMiningStatsAtBlock</a></li><li data-type='method'><a href="module-Utilities.html#~getNonce">getNonce</a></li><li data-type='method'><a href="module-Utilities.html#~getOptimalFee">getOptimalFee</a></li><li data-type='method'><a href="module-Utilities.html#~getStxBalance">getStxBalance</a></li><li data-type='method'><a href="module-Utilities.html#~getTotalMempoolTx">getTotalMempoolTx</a></li><li data-type='method'><a href="module-Utilities.html#~printDivider">printDivider</a></li><li data-type='method'><a href="module-Utilities.html#~printTimeStamp">printTimeStamp</a></li><li data-type='method'><a href="module-Utilities.html#~processTx">processTx</a></li><li data-type='method'><a href="module-Utilities.html#~timer">timer</a></li><li data-type='method'><a href="module-Utilities.html#~waitUntilBlock">waitUntilBlock</a></li></ul></li></ul>
+</nav>
+
+<div id="main">
+    
+
+    
+
+
+
+    
+
+
+    <section class="package">
+        <h3> </h3>		
+    </section>
+
+
+
+
+
+
+
+
+
+    
+
+
+
+    <section class="readme usertext">
+        <article><h1>CityCoins Scripts</h1>
+<blockquote>
+<p>THIS IS ALPHA SOFTWARE THAT REQUIRES A STACKS PRIVATE KEY TO SEND A TRANSACTION.</p>
+<p>THE CODE IS FOR EDUCATIONAL AND DEMONSTRATION PURPOSES ONLY.</p>
+<p>USE AT YOUR OWN RISK. PLEASE REPORT ANY <a href="https://github.com/citycoins/integrations/issues">ISSUES ON GITHUB</a>.</p>
+</blockquote>
+<p>This directory provides a set of Node.js scripts to interact with the CityCoins protocol, starting with the AutoMiner utility.</p>
+<p>This utility provides a simple, easy-to-use, prompt-driven interface for mining CityCoins, with options to set strategies, custom values, and continuously run.</p>
+<h2>Requirements</h2>
+<ul>
+<li><a href="https://nodejs.org/en/">Node.js / NPM</a> (or <a href="https://github.com/nvm-sh/nvm">nvm</a> for Mac/Linux)</li>
+<li>Hex encoded private key for a Stacks address</li>
+</ul>
+<h2>Obtaining the Private Key</h2>
+<p>The hex encoded private key required by the script can be obtained through <a href="https://github.com/psq/stacks-gen">stacks-gen</a>.</p>
+<p>Using <code>npx</code> is the simplest method:</p>
+<p><strong>Note:</strong> random key used for example purposes, do not use this key for anything</p>
+<pre class="prettyprint source lang-bash"><code>npx -q stacks-gen sk -p &quot;mouse lava square pink fuel morning adapt ozone primary tent exercise trip title spice stand must spider monster erupt field brain source strike lawn&quot;
+</code></pre>
+<p>Output:</p>
+<pre class="prettyprint source lang-json"><code>{
+  &quot;phrase&quot;: &quot;mouse lava square pink fuel morning adapt ozone primary tent exercise trip title spice stand must spider monster erupt field brain source strike lawn&quot;,
+  &quot;private&quot;: &quot;63933c159a24820a8bd185be36fd38452d151a32c63d1d22dfcf0ae4b1a1aa6b01&quot;,
+  &quot;public&quot;: &quot;032021077d7cd149eb3eafb5df395461d422015f75b71b1178aaf20a0b5e802cb5&quot;,
+  &quot;public_uncompressed&quot;: &quot;042021077d7cd149eb3eafb5df395461d422015f75b71b1178aaf20a0b5e802cb5643f3720df37ae94d7a2d0f07f5a3e4bba4f7bc980c7925e2cd78fe637f650ff&quot;,
+  &quot;stacks&quot;: &quot;SP38VZTWNAP1BZ2ZS7AVDAQJ8XTZW3330KA5YDDM6&quot;,
+  &quot;stacking&quot;: &quot;{ hashbytes: 0xd1bfeb955582bf8bf93ab6d55e48eebfc18c609a, version: 0x00 }&quot;,
+  &quot;btc&quot;: &quot;1L848wpPsaJrHvVvqn1SmYCC1A88TdkCqW&quot;,
+  &quot;wif&quot;: &quot;KzZGj32eABBPrMeBkd2tg6p71gA3wFfJtJ9bDqjNji8mvBwiifsw&quot;
+}
+</code></pre>
+<p>The value for <code>private</code> is needed for the AutoMiner to be able to send the transaction:</p>
+<p><code>63933c159a24820a8bd185be36fd38452d151a32c63d1d22dfcf0ae4b1a1aa6b01</code></p>
+<p><strong>Note:</strong> seriously, do not use this key for anything. This <strong>private key</strong> is the same as your <strong>seed phrase</strong> and should <strong>never be shared with anyone</strong>.</p>
+<h2>Installing the AutoMiner</h2>
+<p>Clone this repository using either <code>ssh</code> or <code>https</code>:</p>
+<pre class="prettyprint source lang-bash"><code>git clone git@github.com:citycoins/integrations.git
+OR
+git clone https://github.com/citycoins/integrations.git
+</code></pre>
+<p>Enter the directory for the AutoMiner and install the prequisites:</p>
+<pre class="prettyprint source lang-bash"><code>cd integrations/scripts
+npm install
+</code></pre>
+<h2>Running the AutoMiner</h2>
+<p>The miner will prompt for information on the first transaction, and use the same information for subsequent transactions if more than one is selected or continuously mining.</p>
+<pre class="prettyprint source lang-bash"><code>node autominer.js
+</code></pre>
+<h2>AutoMiner Configuration</h2>
+<h3>User Config</h3>
+<table>
+<thead>
+<tr>
+<th>Name</th>
+<th>Prompt</th>
+<th>Desc</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>citycoin</td>
+<td>Select a CityCoin to mine:</td>
+<td>Sets target contract values in userConfig</td>
+</tr>
+<tr>
+<td>stxAddress</td>
+<td>Stacks Address to mine with?</td>
+<td>Stacks address used for mining</td>
+</tr>
+<tr>
+<td>stxPrivateKey</td>
+<td>Private Key for Stacks Address?</td>
+<td>Hex-encoded private key used to submit tx</td>
+</tr>
+<tr>
+<td>autoMine</td>
+<td>Continuously mine with full STX balance?</td>
+<td>Confirm continuous mining</td>
+</tr>
+<tr>
+<td>autoMineConfirm</td>
+<td>Confirm mining with full STX balance?</td>
+<td>Confirm continuous mining again</td>
+</tr>
+<tr>
+<td>numberOfRuns</td>
+<td>Number of mining TX to send?</td>
+<td>If not continously mining, set number of mining tx</td>
+</tr>
+<tr>
+<td>numberOfBlocks</td>
+<td>Number of blocks to mine per TX? (1-200)</td>
+<td>How many blocks to mine in a single TX</td>
+</tr>
+<tr>
+<td>startNow</td>
+<td>Start mining now?</td>
+<td>Confirm starting the miner at the current block height</td>
+</tr>
+<tr>
+<td>targetBlockHeight</td>
+<td>Target block height? (current: currentBlockHeight)</td>
+<td>Set a future block height to send the first TX</td>
+</tr>
+<tr>
+<td>customCommit</td>
+<td>Set custom block commit?</td>
+<td>Confirm setting a custom block commit</td>
+</tr>
+<tr>
+<td>customCommitValue</td>
+<td>Custom block commit value in uSTX? (1,000,000 uSTX = 1 STX)</td>
+<td>Set the custom block commit in uSTX</td>
+</tr>
+<tr>
+<td>customFee</td>
+<td>Set custom fee?</td>
+<td>Confirm setting a custom fee</td>
+</tr>
+<tr>
+<td>customFeeValue</td>
+<td>Custom fee value in uSTX? (1,000,000 uSTX = 1 STX)</td>
+<td>Set the custom fee in uSTX</td>
+</tr>
+</tbody>
+</table>
+<p><strong>Note:</strong> both <code>contractAddress</code> and <code>contractName</code> are set as userConfig properties based on the <code>citycoin</code> selection</p>
+<h3>Mining Strategy</h3>
+<table>
+<thead>
+<tr>
+<th>Name</th>
+<th>Prompt</th>
+<th>Desc</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>strategyDistance</td>
+<td>Number of blocks to search for strategy?</td>
+<td>Used for determining the average total commit for a CityCoin</td>
+</tr>
+<tr>
+<td>targetPercentage</td>
+<td>Target percentage of total block commit?</td>
+<td>Used for determining the mining commit based on strategy average</td>
+</tr>
+<tr>
+<td>maxCommitPerBlock</td>
+<td>Max commit per block in uSTX? (1,000,000 uSTX = 1 STX)</td>
+<td>Used as a safety threshold to limit the amount spent per block</td>
+</tr>
+</tbody>
+</table>
+<p>When calculating a commit, the script will:</p>
+<ul>
+<li>get the current block height</li>
+<li>for <code>strategyDistance</code> blocks in the past, calculate the total commit per block</li>
+<li>average the total commit per block in the past</li>
+<li>for <code>strategyDistance</code> blocks in the future, calculate the total commit per block</li>
+<li>average the total commit per block in the future</li>
+<li>average both the total commit per block in the past and future</li>
+<li>multiply the result by <code>targetPercentage</code> to obtain the block commit</li>
+</ul>
+<p><strong>Note:</strong> If the commit is higher than <code>maxCommitPerBlock</code> or the max commit based on available funds in the account, the commit will be reduced to the highest value available to commit across <code>numberOfBlocks</code> blocks from the User Config.</p></article>
+    </section>
+
+
+
+
+
+
+    
+    
+</div>
+
+<br class="clear">
+
+<footer>
+    Documentation generated by <a href="https://github.com/jsdoc3/jsdoc">JSDoc 3.6.7</a> on Sun Dec 19 2021 15:51:16 GMT+0000 (Coordinated Universal Time) using the <a href="https://github.com/clenemt/docdash">docdash</a> theme.
+</footer>
+
+<script>prettyPrint();</script>
+<script src="scripts/polyfill.js"></script>
+<script src="scripts/linenumber.js"></script>
+
+
+
+</body>
+</html>
