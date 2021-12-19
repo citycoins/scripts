@@ -508,11 +508,11 @@ async function autoMine(userConfig, miningStrategy = {}, firstRun = true) {
     // check if AutoMiner should restart with new value
     if (userConfig.autoMineConfirm === true || userConfig.numberOfRuns > 0) {
       userConfig.numberOfRuns -= 1;
-      userConfig.targetBlock = processTxBlock + userConfig.numberOfBlocks;
+      userConfig.targetBlockHeight = processTxBlock + userConfig.numberOfBlocks;
       printDivider();
       console.log(title("STATUS: RESTARTING WITH NEW TARGET"));
       printDivider();
-      console.log(`newTarget: ${userConfig.targetBlock}`);
+      console.log(`newTarget: ${userConfig.targetBlockHeight}`);
       autoMine(userConfig, miningStrategy, false);
     } else {
       exitWithError("Selected number of runs complete, exiting...");
