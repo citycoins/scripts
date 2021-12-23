@@ -18,7 +18,7 @@ jobs:
           source_dir: ./
           output_dir: ./jsdoc
           template: docdash
-          front_page: ./README.md
+          front_page: ./info/landing.md
 
       - name: Deploy
         uses: peaceiris/actions-gh-pages@v3
