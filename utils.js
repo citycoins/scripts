@@ -1,6 +1,12 @@
 import chalk from "chalk";
 import { StacksMainnet } from "@stacks/network";
-import { callReadOnlyFunction, cvToJSON, uintCV } from "@stacks/transactions";
+import {
+  callReadOnlyFunction,
+  cvToJSON,
+  cvToValue,
+  standardPrincipalCV,
+  uintCV,
+} from "@stacks/transactions";
 
 export const title = chalk.bold.blue;
 export const warn = chalk.bold.yellow;
@@ -313,6 +319,82 @@ async function getMiningStatsAtBlock(
   });
   const result = cvToJSON(resultCV);
   return result.value.amount.value;
+}
+
+/**
+ * @async
+ * @function getStackerAtCycleOrDefault
+ * @param {string} contractAddress
+ * @param {string} contractName
+ * @param {integer} cycleId
+ * @param {integer} userId
+ * @description Returns the amount stacked and amount to return for a given cycle and user
+ * @returns {Object[]}
+ */
+export async function getStackerAtCycleOrDefault(
+  contractAddress,
+  contractName,
+  cycleId,
+  userId
+) {
+  const resultCv = await callReadOnlyFunction({
+    contractAddress: contractAddress,
+    contractName: contractName,
+    functionName: "get-stacker-at-cycle-or-default",
+    functionArgs: [uintCV(cycleId), uintCV(userId)],
+    network: STACKS_NETWORK,
+    senderAddress: contractAddress,
+  });
+  const result = cvToJSON(resultCv);
+  return result;
+}
+
+/**
+ * @async
+ * @function getUserId
+ * @param {string} contractAddress
+ * @param {string} contractName
+ * @param {string} address
+ * @description Returns the userId in the CityCoin contract for a given address
+ * @returns {integer}
+ */
+export async function getUserId(contractAddress, contractName, address) {
+  const resultCv = await callReadOnlyFunction({
+    contractAddress: contractAddress,
+    contractName: contractName,
+    functionName: "get-user-id",
+    functionArgs: [standardPrincipalCV(address)],
+    network: STACKS_NETWORK,
+    senderAddress: contractAddress,
+  });
+  const result = cvToValue(resultCv);
+  return parseInt(result.value);
+}
+
+/**
+ * @async
+ * @function getRewardCycle
+ * @param {string} contractAddress
+ * @param {string} contractName
+ * @param {integer} blockHeight
+ * @description Returns the reward cycle for a given block height
+ * @returns {integer}
+ */
+export async function getRewardCycle(
+  contractAddress,
+  contractName,
+  blockHeight
+) {
+  const resultCv = await callReadOnlyFunction({
+    contractAddress: contractAddress,
+    contractName: contractName,
+    functionName: "get-reward-cycle",
+    functionArgs: [uintCV(blockHeight)],
+    network: STACKS_NETWORK,
+    senderAddress: contractAddress,
+  });
+  const result = cvToJSON(resultCv);
+  return parseInt(result.value.value);
 }
 
 /**
