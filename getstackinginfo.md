@@ -32,10 +32,6 @@ node getstackinginfo.js
 
 **Note:** `contractAddress`, `contractName`, and `tokenSymbol` are set as userConfig properties based on the `citycoin` selection
 
----
-
-[![Back to README](https://img.shields.io/static/v1?label=&message=Back%20to%20README&color=3059d9&style=for-the-badge)](README.md)
-
 ## Sample Output
 
 See below the results for `SP1FJ0MY8M18KZF43E85WJN48SDXYS1EC4BCQW02S`:
@@ -53,3 +49,7 @@ See below the results for `SP1FJ0MY8M18KZF43E85WJN48SDXYS1EC4BCQW02S`:
 │    6    │  'NYC'   │   7   │       0       │    0     │
 └─────────┴──────────┴───────┴───────────────┴──────────┘
 ```
+
+---
+
+[![Back to README](https://img.shields.io/static/v1?label=&message=Back%20to%20README&color=3059d9&style=for-the-badge)](README.md)
