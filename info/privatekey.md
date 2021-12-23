@@ -39,4 +39,4 @@ e.g. `63933c159a24820a8bd185be36fd38452d151a32c63d1d22dfcf0ae4b1a1aa6b01`
 
 ---
 
-[![Back to README](https://img.shields.io/static/v1?label=&message=Back%20to%20README&color=3059d9&style=for-the-badge)](../)
+[![Back to README](https://img.shields.io/static/v1?label=&message=Back%20to%20README&color=3059d9&style=for-the-badge)](../README.md)
