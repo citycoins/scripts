@@ -27,7 +27,7 @@
 
 <nav >
     
-    <h2><a href="index.html">Home</a></h2><h3>Modules</h3><ul><li><a href="module-AutoMiner.html">AutoMiner</a><ul class='methods'><li data-type='method'><a href="module-AutoMiner.html#~autoMine">autoMine</a></li><li data-type='method'><a href="module-AutoMiner.html#~cancel">cancel</a></li><li data-type='method'><a href="module-AutoMiner.html#~promptFeeStrategy">promptFeeStrategy</a></li><li data-type='method'><a href="module-AutoMiner.html#~promptMiningStrategy">promptMiningStrategy</a></li><li data-type='method'><a href="module-AutoMiner.html#~promptUserConfig">promptUserConfig</a></li></ul></li><li><a href="module-Utilities.html">Utilities</a><ul class='methods'><li data-type='method'><a href="module-Utilities.html#~exitWithError">exitWithError</a></li><li data-type='method'><a href="module-Utilities.html#~getAccountTxs">getAccountTxs</a></li><li data-type='method'><a href="module-Utilities.html#~getBlockAvg">getBlockAvg</a></li><li data-type='method'><a href="module-Utilities.html#~getBlockCommit">getBlockCommit</a></li><li data-type='method'><a href="module-Utilities.html#~getBlockHeight">getBlockHeight</a></li><li data-type='method'><a href="module-Utilities.html#~getMiningStatsAtBlock">getMiningStatsAtBlock</a></li><li data-type='method'><a href="module-Utilities.html#~getNonce">getNonce</a></li><li data-type='method'><a href="module-Utilities.html#~getOptimalFee">getOptimalFee</a></li><li data-type='method'><a href="module-Utilities.html#~getStxBalance">getStxBalance</a></li><li data-type='method'><a href="module-Utilities.html#~getTotalMempoolTx">getTotalMempoolTx</a></li><li data-type='method'><a href="module-Utilities.html#~printDivider">printDivider</a></li><li data-type='method'><a href="module-Utilities.html#~printTimeStamp">printTimeStamp</a></li><li data-type='method'><a href="module-Utilities.html#~processTx">processTx</a></li><li data-type='method'><a href="module-Utilities.html#~timer">timer</a></li><li data-type='method'><a href="module-Utilities.html#~waitUntilBlock">waitUntilBlock</a></li></ul></li></ul>
+    <h2><a href="index.html">Home</a></h2><h3>Modules</h3><ul><li><a href="module-AutoMiner.html">AutoMiner</a><ul class='methods'><li data-type='method'><a href="module-AutoMiner.html#~autoMine">autoMine</a></li><li data-type='method'><a href="module-AutoMiner.html#~cancel">cancel</a></li><li data-type='method'><a href="module-AutoMiner.html#~promptFeeStrategy">promptFeeStrategy</a></li><li data-type='method'><a href="module-AutoMiner.html#~promptMiningStrategy">promptMiningStrategy</a></li><li data-type='method'><a href="module-AutoMiner.html#~promptUserConfig">promptUserConfig</a></li></ul></li><li><a href="module-GetStackingInfo.html">GetStackingInfo</a><ul class='methods'><li data-type='method'><a href="module-GetStackingInfo.html#~getStackingInfo">getStackingInfo</a></li><li data-type='method'><a href="module-GetStackingInfo.html#~promptUserConfig">promptUserConfig</a></li></ul></li><li><a href="module-Utilities.html">Utilities</a><ul class='methods'><li data-type='method'><a href="module-Utilities.html#~exitWithError">exitWithError</a></li><li data-type='method'><a href="module-Utilities.html#~getAccountTxs">getAccountTxs</a></li><li data-type='method'><a href="module-Utilities.html#~getBlockAvg">getBlockAvg</a></li><li data-type='method'><a href="module-Utilities.html#~getBlockCommit">getBlockCommit</a></li><li data-type='method'><a href="module-Utilities.html#~getBlockHeight">getBlockHeight</a></li><li data-type='method'><a href="module-Utilities.html#~getMiningStatsAtBlock">getMiningStatsAtBlock</a></li><li data-type='method'><a href="module-Utilities.html#~getNonce">getNonce</a></li><li data-type='method'><a href="module-Utilities.html#~getOptimalFee">getOptimalFee</a></li><li data-type='method'><a href="module-Utilities.html#~getRewardCycle">getRewardCycle</a></li><li data-type='method'><a href="module-Utilities.html#~getStackerAtCycleOrDefault">getStackerAtCycleOrDefault</a></li><li data-type='method'><a href="module-Utilities.html#~getStxBalance">getStxBalance</a></li><li data-type='method'><a href="module-Utilities.html#~getTotalMempoolTx">getTotalMempoolTx</a></li><li data-type='method'><a href="module-Utilities.html#~getUserId">getUserId</a></li><li data-type='method'><a href="module-Utilities.html#~printDivider">printDivider</a></li><li data-type='method'><a href="module-Utilities.html#~printTimeStamp">printTimeStamp</a></li><li data-type='method'><a href="module-Utilities.html#~processTx">processTx</a></li><li data-type='method'><a href="module-Utilities.html#~timer">timer</a></li><li data-type='method'><a href="module-Utilities.html#~waitUntilBlock">waitUntilBlock</a></li></ul></li></ul>
 </nav>
 
 <div id="main">
@@ -44,7 +44,13 @@
         <article>
             <pre class="prettyprint source linenums"><code>import chalk from "chalk";
 import { StacksMainnet } from "@stacks/network";
-import { callReadOnlyFunction, cvToJSON, uintCV } from "@stacks/transactions";
+import {
+  callReadOnlyFunction,
+  cvToJSON,
+  cvToValue,
+  standardPrincipalCV,
+  uintCV,
+} from "@stacks/transactions";
 
 export const title = chalk.bold.blue;
 export const warn = chalk.bold.yellow;
@@ -360,6 +366,82 @@ async function getMiningStatsAtBlock(
 }
 
 /**
+ * @async
+ * @function getStackerAtCycleOrDefault
+ * @param {string} contractAddress
+ * @param {string} contractName
+ * @param {integer} cycleId
+ * @param {integer} userId
+ * @description Returns the amount stacked and amount to return for a given cycle and user
+ * @returns {Object[]}
+ */
+export async function getStackerAtCycleOrDefault(
+  contractAddress,
+  contractName,
+  cycleId,
+  userId
+) {
+  const resultCv = await callReadOnlyFunction({
+    contractAddress: contractAddress,
+    contractName: contractName,
+    functionName: "get-stacker-at-cycle-or-default",
+    functionArgs: [uintCV(cycleId), uintCV(userId)],
+    network: STACKS_NETWORK,
+    senderAddress: contractAddress,
+  });
+  const result = cvToJSON(resultCv);
+  return result;
+}
+
+/**
+ * @async
+ * @function getUserId
+ * @param {string} contractAddress
+ * @param {string} contractName
+ * @param {string} address
+ * @description Returns the userId in the CityCoin contract for a given address
+ * @returns {integer}
+ */
+export async function getUserId(contractAddress, contractName, address) {
+  const resultCv = await callReadOnlyFunction({
+    contractAddress: contractAddress,
+    contractName: contractName,
+    functionName: "get-user-id",
+    functionArgs: [standardPrincipalCV(address)],
+    network: STACKS_NETWORK,
+    senderAddress: contractAddress,
+  });
+  const result = cvToValue(resultCv);
+  return parseInt(result.value);
+}
+
+/**
+ * @async
+ * @function getRewardCycle
+ * @param {string} contractAddress
+ * @param {string} contractName
+ * @param {integer} blockHeight
+ * @description Returns the reward cycle for a given block height
+ * @returns {integer}
+ */
+export async function getRewardCycle(
+  contractAddress,
+  contractName,
+  blockHeight
+) {
+  const resultCv = await callReadOnlyFunction({
+    contractAddress: contractAddress,
+    contractName: contractName,
+    functionName: "get-reward-cycle",
+    functionArgs: [uintCV(blockHeight)],
+    network: STACKS_NETWORK,
+    senderAddress: contractAddress,
+  });
+  const result = cvToJSON(resultCv);
+  return parseInt(result.value.value);
+}
+
+/**
  * @function printDivider
  * @description Prints a consistent divider used for logging
  */
@@ -468,7 +550,7 @@ export async function waitUntilBlock(userConfig) {
 <br class="clear">
 
 <footer>
-    Documentation generated by <a href="https://github.com/jsdoc3/jsdoc">JSDoc 3.6.7</a> on Sun Dec 19 2021 16:15:44 GMT+0000 (Coordinated Universal Time) using the <a href="https://github.com/clenemt/docdash">docdash</a> theme.
+    Documentation generated by <a href="https://github.com/jsdoc3/jsdoc">JSDoc 3.6.7</a> on Thu Dec 23 2021 17:20:44 GMT+0000 (Coordinated Universal Time) using the <a href="https://github.com/clenemt/docdash">docdash</a> theme.
 </footer>
 
 <script>prettyPrint();</script>
