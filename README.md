@@ -6,14 +6,14 @@ All functions are documented using [JSDoc](https://jsdoc.app/about-getting-start
 
 To learn more about a specific script, click on the link below.
 
-| Name                                       | Description                                       |
-| ------------------------------------------ | ------------------------------------------------- |
-| [`autominer.js`](autominer.md)             | Utility for continously mining CityCoins          |
-| [`getstackinginfo.js`](getstackinginfo.md) | Get the current Stacking info for a given address |
+| Name                                                                                      | Description                                       |
+| ----------------------------------------------------------------------------------------- | ------------------------------------------------- |
+| [`autominer.js`](https://github.com/citycoins/scripts/blob/main/autominer.md)             | Utility for continously mining CityCoins          |
+| [`getstackinginfo.js`](https://github.com/citycoins/scripts/blob/main/getstackinginfo.md) | Get the current Stacking info for a given address |
 
 All of the scripts use [prompts](https://github.com/terkelg/prompts) to gather the required information, and nothing is stored on disk.
 
-For scripts that use a private key, remember to **keep it safe** and **never share with anyone**. [This page has more information](privatekey.md) on how to obtain your hex encoded private key for scripts that require it.
+For scripts that use a private key, remember to **keep it safe** and **never share with anyone**. [This page has more information](https://github.com/citycoins/scripts/blob/main/privatekey.md) on how to obtain your hex encoded private key for scripts that require it.
 
 ## Requirements
 

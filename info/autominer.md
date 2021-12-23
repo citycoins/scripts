@@ -18,7 +18,7 @@ This utility provides a simple, easy-to-use, prompt-driven interface for mining 
 
 The private key is used to sign transactions, and is required to send a transaction from a given Stacks address.
 
-More details on how to obtain the private key [can be found here](privatekey.md).
+More details on how to obtain the private key [can be found here](https://github.com/citycoins/scripts/blob/main/privatekey.md).
 
 ## Running the AutoMiner
 
@@ -72,4 +72,4 @@ When calculating a commit, the script will:
 
 ---
 
-[![Back to README](https://img.shields.io/static/v1?label=&message=Back%20to%20README&color=3059d9&style=for-the-badge)](README.md)
+[![Back to README](https://img.shields.io/static/v1?label=&message=Back%20to%20README&color=3059d9&style=for-the-badge)](../)
