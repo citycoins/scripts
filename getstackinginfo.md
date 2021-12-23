@@ -1,6 +1,10 @@
-# Get Stacking Info
+# Get Stacking Info <!-- omit in toc -->
 
 This utility provides a simple, easy-to-use, prompt-driven interface for obtaining Stacking info for an address.
+
+- [Running Get Stacking Info](#running-get-stacking-info)
+- [Get Stacking Info Configuration](#get-stacking-info-configuration)
+- [Sample Output](#sample-output)
 
 ## Running Get Stacking Info
 
