@@ -27,7 +27,7 @@
 
 <nav >
     
-    <h2><a href="index.html">Home</a></h2><h3>Modules</h3><ul><li><a href="module-AutoMiner.html">AutoMiner</a><ul class='methods'><li data-type='method'><a href="module-AutoMiner.html#~autoMine">autoMine</a></li><li data-type='method'><a href="module-AutoMiner.html#~cancel">cancel</a></li><li data-type='method'><a href="module-AutoMiner.html#~promptFeeStrategy">promptFeeStrategy</a></li><li data-type='method'><a href="module-AutoMiner.html#~promptMiningStrategy">promptMiningStrategy</a></li><li data-type='method'><a href="module-AutoMiner.html#~promptUserConfig">promptUserConfig</a></li></ul></li><li><a href="module-GetStackingInfo.html">GetStackingInfo</a><ul class='methods'><li data-type='method'><a href="module-GetStackingInfo.html#~getStackingInfo">getStackingInfo</a></li><li data-type='method'><a href="module-GetStackingInfo.html#~promptUserConfig">promptUserConfig</a></li></ul></li><li><a href="module-Utilities.html">Utilities</a><ul class='methods'><li data-type='method'><a href="module-Utilities.html#~exitWithError">exitWithError</a></li><li data-type='method'><a href="module-Utilities.html#~getAccountTxs">getAccountTxs</a></li><li data-type='method'><a href="module-Utilities.html#~getBlockAvg">getBlockAvg</a></li><li data-type='method'><a href="module-Utilities.html#~getBlockCommit">getBlockCommit</a></li><li data-type='method'><a href="module-Utilities.html#~getBlockHeight">getBlockHeight</a></li><li data-type='method'><a href="module-Utilities.html#~getMiningStatsAtBlock">getMiningStatsAtBlock</a></li><li data-type='method'><a href="module-Utilities.html#~getNonce">getNonce</a></li><li data-type='method'><a href="module-Utilities.html#~getOptimalFee">getOptimalFee</a></li><li data-type='method'><a href="module-Utilities.html#~getRewardCycle">getRewardCycle</a></li><li data-type='method'><a href="module-Utilities.html#~getStackerAtCycleOrDefault">getStackerAtCycleOrDefault</a></li><li data-type='method'><a href="module-Utilities.html#~getStxBalance">getStxBalance</a></li><li data-type='method'><a href="module-Utilities.html#~getTotalMempoolTx">getTotalMempoolTx</a></li><li data-type='method'><a href="module-Utilities.html#~getUserId">getUserId</a></li><li data-type='method'><a href="module-Utilities.html#~printDivider">printDivider</a></li><li data-type='method'><a href="module-Utilities.html#~printTimeStamp">printTimeStamp</a></li><li data-type='method'><a href="module-Utilities.html#~processTx">processTx</a></li><li data-type='method'><a href="module-Utilities.html#~timer">timer</a></li><li data-type='method'><a href="module-Utilities.html#~waitUntilBlock">waitUntilBlock</a></li></ul></li></ul>
+    <h2><a href="index.html">Home</a></h2><h3>Modules</h3><ul><li><a href="module-AutoMiner.html">AutoMiner</a><ul class='methods'><li data-type='method'><a href="module-AutoMiner.html#~autoMine">autoMine</a></li><li data-type='method'><a href="module-AutoMiner.html#~cancel">cancel</a></li><li data-type='method'><a href="module-AutoMiner.html#~promptFeeStrategy">promptFeeStrategy</a></li><li data-type='method'><a href="module-AutoMiner.html#~promptMiningStrategy">promptMiningStrategy</a></li><li data-type='method'><a href="module-AutoMiner.html#~promptUserConfig">promptUserConfig</a></li></ul></li><li><a href="module-GetStackingInfo.html">GetStackingInfo</a><ul class='methods'><li data-type='method'><a href="module-GetStackingInfo.html#~getStackingInfo">getStackingInfo</a></li><li data-type='method'><a href="module-GetStackingInfo.html#~promptUserConfig">promptUserConfig</a></li></ul></li><li><a href="module-Utilities.html">Utilities</a><ul class='methods'><li data-type='method'><a href="module-Utilities.html#~exitWithError">exitWithError</a></li><li data-type='method'><a href="module-Utilities.html#~getAccountTxs">getAccountTxs</a></li><li data-type='method'><a href="module-Utilities.html#~getBlockAvg">getBlockAvg</a></li><li data-type='method'><a href="module-Utilities.html#~getBlockCommit">getBlockCommit</a></li><li data-type='method'><a href="module-Utilities.html#~getBlockHeight">getBlockHeight</a></li><li data-type='method'><a href="module-Utilities.html#~getMiningStatsAtBlock">getMiningStatsAtBlock</a></li><li data-type='method'><a href="module-Utilities.html#~getNonce">getNonce</a></li><li data-type='method'><a href="module-Utilities.html#~getOptimalFee">getOptimalFee</a></li><li data-type='method'><a href="module-Utilities.html#~getRewardCycle">getRewardCycle</a></li><li data-type='method'><a href="module-Utilities.html#~getStackerAtCycleOrDefault">getStackerAtCycleOrDefault</a></li><li data-type='method'><a href="module-Utilities.html#~getStackingReward">getStackingReward</a></li><li data-type='method'><a href="module-Utilities.html#~getStxBalance">getStxBalance</a></li><li data-type='method'><a href="module-Utilities.html#~getTotalMempoolTx">getTotalMempoolTx</a></li><li data-type='method'><a href="module-Utilities.html#~getUserId">getUserId</a></li><li data-type='method'><a href="module-Utilities.html#~printDivider">printDivider</a></li><li data-type='method'><a href="module-Utilities.html#~printTimeStamp">printTimeStamp</a></li><li data-type='method'><a href="module-Utilities.html#~processTx">processTx</a></li><li data-type='method'><a href="module-Utilities.html#~timer">timer</a></li><li data-type='method'><a href="module-Utilities.html#~waitUntilBlock">waitUntilBlock</a></li></ul></li></ul>
 </nav>
 
 <div id="main">
@@ -49,6 +49,7 @@ import {
   getBlockHeight,
   getRewardCycle,
   getStackerAtCycleOrDefault,
+  getStackingReward,
   getUserId,
   printDivider,
   printTimeStamp,
@@ -157,6 +158,9 @@ async function getStackingInfo() {
 
   if (userConfig.searchAllCycles) {
     console.log(`Checking cycles 1 to ${currentCycle + maxCycles}...`);
+    console.log(
+      `Note: stxReward will show 0 unless there are rewards to claim`
+    );
     let i = 0;
     do {
       const stacker = await getStackerAtCycleOrDefault(
@@ -165,11 +169,21 @@ async function getStackingInfo() {
         i + 1,
         userId
       );
+      let stackingReward = 0;
+      if (i &lt;= currentCycle) {
+        stackingReward = await getStackingReward(
+          userConfig.contractAddress,
+          userConfig.contractName,
+          i + 1,
+          userId
+        );
+      }
       stackingStats.push({
         CityCoin: userConfig.tokenSymbol,
         Cycle: i + 1,
         amountStacked: parseInt(stacker.value.amountStacked.value),
         toReturn: parseInt(stacker.value.toReturn.value),
+        stxReward: stackingReward,
       });
       if (i > currentCycle) {
         if (parseInt(stacker.value.amountStacked.value) === 0) {
@@ -181,7 +195,16 @@ async function getStackingInfo() {
     } while (i &lt; currentCycle + maxCycles);
   } else {
     console.log(`Checking cycle ${userConfig.targetCycle}...`);
+    console.log(
+      `Note: stxReward will show 0 unless there are rewards to claim`
+    );
     const stacker = await getStackerAtCycleOrDefault(
+      userConfig.contractAddress,
+      userConfig.contractName,
+      userConfig.targetCycle,
+      userId
+    );
+    const stackingReward = await getStackingReward(
       userConfig.contractAddress,
       userConfig.contractName,
       userConfig.targetCycle,
@@ -192,6 +215,7 @@ async function getStackingInfo() {
       Cycle: userConfig.targetCycle,
       amountStacked: parseInt(stacker.value.amountStacked.value),
       toReturn: parseInt(stacker.value.toReturn.value),
+      stxReward: stackingReward,
     });
   }
 
@@ -213,7 +237,7 @@ getStackingInfo();
 <br class="clear">
 
 <footer>
-    Documentation generated by <a href="https://github.com/jsdoc3/jsdoc">JSDoc 3.6.7</a> on Thu Dec 23 2021 18:12:09 GMT+0000 (Coordinated Universal Time) using the <a href="https://github.com/clenemt/docdash">docdash</a> theme.
+    Documentation generated by <a href="https://github.com/jsdoc3/jsdoc">JSDoc 3.6.7</a> on Mon Dec 27 2021 22:58:24 GMT+0000 (Coordinated Universal Time) using the <a href="https://github.com/clenemt/docdash">docdash</a> theme.
 </footer>
 
 <script>prettyPrint();</script>
