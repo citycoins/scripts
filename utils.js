@@ -349,6 +349,24 @@ export async function getStackerAtCycleOrDefault(
   return result;
 }
 
+export async function getStackingReward(
+  contractAddress,
+  contractName,
+  cycleId,
+  userId
+) {
+  const resultCv = await callReadOnlyFunction({
+    contractAddress: contractAddress,
+    contractName: contractName,
+    functionName: "get-stacking-reward",
+    functionArgs: [uintCV(userId), uintCV(cycleId)],
+    network: STACKS_NETWORK,
+    senderAddress: contractAddress,
+  });
+  const result = cvToJSON(resultCv);
+  return result.value;
+}
+
 /**
  * @async
  * @function getUserId
