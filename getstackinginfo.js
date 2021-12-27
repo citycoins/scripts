@@ -5,6 +5,7 @@ import {
   getBlockHeight,
   getRewardCycle,
   getStackerAtCycleOrDefault,
+  getStackingReward,
   getUserId,
   printDivider,
   printTimeStamp,
@@ -113,6 +114,9 @@ async function getStackingInfo() {
 
   if (userConfig.searchAllCycles) {
     console.log(`Checking cycles 1 to ${currentCycle + maxCycles}...`);
+    console.log(
+      `Note: stxReward will show 0 unless there are rewards to claim`
+    );
     let i = 0;
     do {
       const stacker = await getStackerAtCycleOrDefault(
@@ -121,11 +125,21 @@ async function getStackingInfo() {
         i + 1,
         userId
       );
+      let stackingReward = 0;
+      if (i <= currentCycle) {
+        stackingReward = await getStackingReward(
+          userConfig.contractAddress,
+          userConfig.contractName,
+          i + 1,
+          userId
+        );
+      }
       stackingStats.push({
         CityCoin: userConfig.tokenSymbol,
         Cycle: i + 1,
         amountStacked: parseInt(stacker.value.amountStacked.value),
         toReturn: parseInt(stacker.value.toReturn.value),
+        stxReward: stackingReward,
       });
       if (i > currentCycle) {
         if (parseInt(stacker.value.amountStacked.value) === 0) {
@@ -137,7 +151,16 @@ async function getStackingInfo() {
     } while (i < currentCycle + maxCycles);
   } else {
     console.log(`Checking cycle ${userConfig.targetCycle}...`);
+    console.log(
+      `Note: stxReward will show 0 unless there are rewards to claim`
+    );
     const stacker = await getStackerAtCycleOrDefault(
+      userConfig.contractAddress,
+      userConfig.contractName,
+      userConfig.targetCycle,
+      userId
+    );
+    const stackingReward = await getStackingReward(
       userConfig.contractAddress,
       userConfig.contractName,
       userConfig.targetCycle,
@@ -148,6 +171,7 @@ async function getStackingInfo() {
       Cycle: userConfig.targetCycle,
       amountStacked: parseInt(stacker.value.amountStacked.value),
       toReturn: parseInt(stacker.value.toReturn.value),
+      stxReward: stackingReward,
     });
   }
 
