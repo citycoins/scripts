@@ -351,6 +351,34 @@ export async function getStackerAtCycleOrDefault(
 
 /**
  * @async
+ * @function getStackingReward
+ * @param {string} contractAddress
+ * @param {string} contractName
+ * @param {integer} cycleId
+ * @param {integer} userId
+ * @description Returns the amount of STX a user can claim in a given reward cycle in uSTX.
+ * @returns {integer}
+ */
+export async function getStackingReward(
+  contractAddress,
+  contractName,
+  cycleId,
+  userId
+) {
+  const resultCv = await callReadOnlyFunction({
+    contractAddress: contractAddress,
+    contractName: contractName,
+    functionName: "get-stacking-reward",
+    functionArgs: [uintCV(userId), uintCV(cycleId)],
+    network: STACKS_NETWORK,
+    senderAddress: contractAddress,
+  });
+  const result = cvToJSON(resultCv);
+  return parseInt(result.value);
+}
+
+/**
+ * @async
  * @function getUserId
  * @param {string} contractAddress
  * @param {string} contractName
