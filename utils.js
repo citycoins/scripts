@@ -57,7 +57,15 @@ export async function processTx(broadcastedResult, tx) {
     const txResult = await result.json();
 
     printDivider();
-    console.log(title(`TX STATUS: ${txResult.tx_status.toUpperCase()}`));
+    console.log(
+      title(
+        `TX STATUS: ${
+          txResult.hasOwnProperty("tx_status")
+            ? txResult.tx_status.toUpperCase()
+            : "PENDING"
+        }`
+      )
+    );
     printDivider();
     printTimeStamp();
     console.log(`https://explorer.stacks.co/txid/${txResult.tx_id}`);
@@ -78,8 +86,6 @@ export async function processTx(broadcastedResult, tx) {
       }
     }
     // pause for 30min before checking again
-    // await timer(1800000);
-    // temporarily 5min for testing
     await timer(300000);
     count++;
   } while (count < countLimit);
