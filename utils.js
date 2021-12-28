@@ -40,6 +40,15 @@ STACKS_NETWORK.coreApiUrl = "https://stacks-node-api.stacks.co";
 export const timer = (ms) => new Promise((res) => setTimeout(res, ms));
 
 /**
+ * @function cancelPrompt
+ * @param {Object[]} prompt An object that contains the current prompt displayed to the user
+ * @description Catches a cancel event in prompts, sets the message, and exits the AutoMiner
+ */
+export const cancelPrompt = (prompt) => {
+  exitWithError(`ERROR: cancelled by user at ${prompt.name}, exiting...`);
+};
+
+/**
  * @async
  * @function processTx
  * @param {TxBroadcastResult} broadcastedResult result from broadcastTransaction() in @stacks/transactions
