@@ -106,7 +106,7 @@ async function getStackingInfo() {
     userConfig.contractName,
     userConfig.stxAddress
   ).catch((err) => exitWithError(`getUserId err: ${err}`));
-  console.log(`UserId: ${userId}`);
+  console.log(`userId: ${userId}`);
 
   printDivider();
 
