@@ -476,7 +476,7 @@ async function autoMine(userConfig, miningStrategy = {}, firstRun = true) {
           sumCV.value
         ),
       ],
-      STACKS_NETWORK,
+      network: STACKS_NETWORK,
     };
 
     // pause 10sec
@@ -531,6 +531,4 @@ console.log(warn("USE AT YOUR OWN RISK. PLEASE REPORT ANY ISSUES ON GITHUB."));
 printDivider();
 console.log(title("STATUS: SETTING USER CONFIG"));
 printDivider();
-promptUserConfig().then((answers) => {
-  autoMine(answers);
-});
+promptUserConfig().then((answers) => autoMine(answers));
