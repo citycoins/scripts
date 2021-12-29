@@ -13,6 +13,7 @@ import {
   STACKS_NETWORK,
   canClaimMiningReward,
   safeFetch,
+  warn,
 } from "./utils.js";
 import {
   uintCV,
@@ -188,10 +189,10 @@ async function autoMiningClaimer(userConfig) {
     const transaction = await makeContractCall(txOptions).catch((err) =>
       exitWithError(`makeContractCall err: ${err}`)
     );
-    const result = await broadcastTransaction(
-      transaction,
-      STACKS_NETWORK
-    ).catch((err) => exitWithError(`broadcastTransaction err: ${err}`));
+    console.log(`https://explorer.stacks.co/txid/${transaction.txid()}`);
+    await broadcastTransaction(transaction, STACKS_NETWORK).catch((err) =>
+      exitWithError(`broadcastTransaction err: ${err}`)
+    );
   }
 }
 
