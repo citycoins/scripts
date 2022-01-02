@@ -123,11 +123,16 @@ async function autoMiningClaimer(userConfig) {
   }
 
   // double-check that blocksUnclaimed is accurate by querying the contract for each block height
-  console.log(`Checking unclaimed blocks...`);
+  console.log(
+    `Checking unclaimed blocks... (est. ${(
+      (blocksUnclaimed.length * 5) /
+      60
+    ).toFixed()} minutes)`
+  );
   const blocksUnclaimedCheck = await Promise.all(
     blocksUnclaimed.map(async (block) => {
-      // pause between requests
-      await timer(1000);
+      // pause between requests to avoid rate limits
+      await timer(5000);
       // check if user can claim mining reward
       return canClaimMiningReward(
         userConfig.contractAddress,
