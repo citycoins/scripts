@@ -129,10 +129,6 @@ async function autoMiningClaimer(userConfig) {
   // double-check that blocksUnclaimed is accurate by querying the contract for each block height
   console.log(`Checking ${blocksUnclaimed.length} unclaimed blocks...`);
 
-  // build array until 25 claimable entries are hit
-  // then kick off loop to process 25 claims
-  // instead of checking all blocks at once
-
   const claimLimit = 2;
   const blocksToClaim = [];
   let checkCounter = 0;
@@ -161,36 +157,6 @@ async function autoMiningClaimer(userConfig) {
     blocksToClaim.length < claimLimit &&
     checkCounter < blocksUnclaimed.length
   );
-
-  /*
-
-  const blocksUnclaimedCheck = [];
-  let totalBlocksWon = 0;
-  for (let i = 0; i < blocksUnclaimed.length; i++) {
-    printDivider();
-    // pause between requests to avoid rate limits
-    console.log(`block: ${blocksUnclaimed[i]}`);
-    await timer(1000);
-    // check if user can claim mining reward
-    const canClaim = await canClaimMiningReward(
-      userConfig.contractAddress,
-      userConfig.contractName,
-      userConfig.stxAddress,
-      blocksUnclaimed[i]
-    ).catch((err) => exitWithError(`canClaimMiningReward err: ${err}`));
-    console.log(`canClaim: ${canClaim}`);
-    blocksUnclaimedCheck.push(canClaim);
-    canClaim && totalBlocksWon++;
-    console.log(`total: ${totalBlocksWon} out of ${blocksUnclaimed.length}`);
-  }
-
-  
-
-  const blocksFiltered = blocksUnclaimed.filter(
-    (value, idx) => blocksUnclaimedCheck[idx]
-  );
-
-  */
 
   console.log(`Total blocks to claim: ${blocksToClaim.length}`);
 
