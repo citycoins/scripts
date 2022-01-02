@@ -129,7 +129,7 @@ async function autoMiningClaimer(userConfig) {
   // double-check that blocksUnclaimed is accurate by querying the contract for each block height
   console.log(`Checking ${blocksUnclaimed.length} unclaimed blocks...`);
 
-  const claimLimit = 2;
+  const claimLimit = 24;
   const blocksToClaim = [];
   let checkCounter = 0;
   do {
