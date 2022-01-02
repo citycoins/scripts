@@ -29,7 +29,7 @@ export const USTX = 1000000;
  * @default
  */
 export const STACKS_NETWORK = new StacksMainnet();
-STACKS_NETWORK.coreApiUrl = "https://stacks-node-api.mainnet.stacks.co";
+STACKS_NETWORK.coreApiUrl = "https://stacks-node-api.stacks.co";
 
 /**
  * @async
