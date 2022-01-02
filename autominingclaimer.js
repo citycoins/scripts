@@ -20,6 +20,7 @@ import {
   PostConditionMode,
   makeContractCall,
   broadcastTransaction,
+  AnchorMode,
 } from "@stacks/transactions";
 
 /** @module AutoMiningClaimer */
@@ -30,7 +31,7 @@ import {
  * @description Default fee to use when no custom fee is set
  * @default
  */
-const defaultFee = 50000;
+const defaultFee = 100000;
 
 /**
  * @async
@@ -122,32 +123,76 @@ async function autoMiningClaimer(userConfig) {
     }
   }
 
+  // reverse array to start with highest block number
+  blocksUnclaimed.reverse();
+
   // double-check that blocksUnclaimed is accurate by querying the contract for each block height
-  console.log(
-    `Checking unclaimed blocks... (est. ${(
-      (blocksUnclaimed.length * 5) /
-      60
-    ).toFixed()} minutes)`
+  console.log(`Checking ${blocksUnclaimed.length} unclaimed blocks...`);
+
+  // build array until 25 claimable entries are hit
+  // then kick off loop to process 25 claims
+  // instead of checking all blocks at once
+
+  const claimLimit = 2;
+  const blocksToClaim = [];
+  let checkCounter = 0;
+  do {
+    printDivider();
+    console.log(`block ${checkCounter + 1} of ${blocksUnclaimed.length}`);
+    console.log(`block: ${blocksUnclaimed[checkCounter]}`);
+    // pause between requests to avoid rate limits
+    await timer(1000);
+    // check if user can claim mining reward
+    const canClaim = await canClaimMiningReward(
+      userConfig.contractAddress,
+      userConfig.contractName,
+      userConfig.stxAddress,
+      blocksUnclaimed[checkCounter]
+    ).catch((err) => exitWithError(`canClaimMiningReward err: ${err}`));
+    console.log(`canClaim: ${canClaim}`);
+    if (canClaim) {
+      // add block height to claim array
+      blocksToClaim.push(blocksUnclaimed[checkCounter]);
+      console.log(`blocksToClaim: ${blocksToClaim.length}`);
+    }
+    // increment counter
+    checkCounter++;
+  } while (
+    blocksToClaim.length < claimLimit &&
+    checkCounter < blocksUnclaimed.length
   );
-  const blocksUnclaimedCheck = await Promise.all(
-    blocksUnclaimed.map(async (block) => {
-      // pause between requests to avoid rate limits
-      await timer(5000);
-      // check if user can claim mining reward
-      return canClaimMiningReward(
-        userConfig.contractAddress,
-        userConfig.contractName,
-        userConfig.stxAddress,
-        block
-      ).catch((err) => exitWithError(`canClaimMiningReward err: ${err}`));
-    })
-  );
+
+  /*
+
+  const blocksUnclaimedCheck = [];
+  let totalBlocksWon = 0;
+  for (let i = 0; i < blocksUnclaimed.length; i++) {
+    printDivider();
+    // pause between requests to avoid rate limits
+    console.log(`block: ${blocksUnclaimed[i]}`);
+    await timer(1000);
+    // check if user can claim mining reward
+    const canClaim = await canClaimMiningReward(
+      userConfig.contractAddress,
+      userConfig.contractName,
+      userConfig.stxAddress,
+      blocksUnclaimed[i]
+    ).catch((err) => exitWithError(`canClaimMiningReward err: ${err}`));
+    console.log(`canClaim: ${canClaim}`);
+    blocksUnclaimedCheck.push(canClaim);
+    canClaim && totalBlocksWon++;
+    console.log(`total: ${totalBlocksWon} out of ${blocksUnclaimed.length}`);
+  }
+
+  
 
   const blocksFiltered = blocksUnclaimed.filter(
     (value, idx) => blocksUnclaimedCheck[idx]
   );
 
-  console.log(`Total blocks to claim: ${blocksFiltered.length}`);
+  */
+
+  console.log(`Total blocks to claim: ${blocksToClaim.length}`);
 
   printDivider();
   console.log(title("STATUS: CLAIMING MINING REWARDS"));
@@ -157,7 +202,7 @@ async function autoMiningClaimer(userConfig) {
     exitWithError(`getNonce err: ${err}`)
   );
 
-  const counterLimit = blocksFiltered.length < 24 ? blocksFiltered.length : 24;
+  const counterLimit = blocksToClaim.length < 24 ? blocksToClaim.length : 24;
   for (let i = 0; i < counterLimit; i++) {
     printDivider();
     console.log(
@@ -166,24 +211,27 @@ async function autoMiningClaimer(userConfig) {
         5
       )}...${userConfig.stxAddress.slice(userConfig.stxAddress.length - 5)}`
     );
-    console.log(`nonce: ${nonce}`);
-    console.log(`claiming block: ${blocksFiltered[i]}`);
+    console.log(`nonce: ${nonce + i}`);
+    console.log(`claiming block: ${blocksToClaim[i]}`);
+    // set the fee
+    const feeRate = userConfig.hasOwnProperty("customFeeValue")
+      ? userConfig.customFeeValue
+      : defaultFee;
+    // set the block height to claim
+    const blockHeightCV = uintCV(parseInt(blocksToClaim[i]));
     // create the claim tx
     const txOptions = {
       contractAddress: userConfig.contractAddress,
       contractName: userConfig.contractName,
-      contractFunction: "claim-mining-reward",
-      functionArgs: [uintCV(blocksFiltered[i])],
+      functionName: "claim-mining-reward",
+      functionArgs: [blockHeightCV],
       senderKey: userConfig.stxPrivateKey,
-      fee: new BN(
-        userConfig.hasOwnProperty("customFeeValue")
-          ? customFeeValue
-          : defaultFee
-      ),
-      nonce: new BN(nonce),
+      fee: new BN(feeRate),
+      nonce: new BN(nonce + i),
       postConditionMode: PostConditionMode.Deny,
       postConditions: [],
       network: STACKS_NETWORK,
+      anchorMode: AnchorMode.Any,
     };
 
     // pause 2sec
