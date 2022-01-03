@@ -158,7 +158,8 @@ async function autoMiningClaimer(userConfig) {
     checkCounter < blocksUnclaimed.length
   );
 
-  console.log(`Total blocks to claim: ${blocksToClaim.length}`);
+  printDivider();
+  console.log(`total blocks to claim: ${blocksToClaim.length}`);
 
   printDivider();
   console.log(title("STATUS: CLAIMING MINING REWARDS"));
@@ -213,6 +214,9 @@ async function autoMiningClaimer(userConfig) {
       exitWithError(`broadcastTransaction err: ${err}`)
     );
   }
+
+  printDivider();
+  console.log(`No more blocks to claim or claim limit reached.`);
 }
 
 // show title and disclaimer on first run
