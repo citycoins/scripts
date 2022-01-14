@@ -137,7 +137,7 @@ async function autoMiningClaimer(userConfig) {
     console.log(`block ${checkCounter + 1} of ${blocksUnclaimed.length}`);
     console.log(`block: ${blocksUnclaimed[checkCounter]}`);
     // pause between requests to avoid rate limits
-    await timer(1000);
+    // await timer(1000);
     // check if user can claim mining reward
     const canClaim = await canClaimMiningReward(
       userConfig.contractAddress,
@@ -202,8 +202,8 @@ async function autoMiningClaimer(userConfig) {
     };
 
     // pause 2sec
-    console.log(`pausing 2sec before submit`);
-    await timer(2000);
+    console.log(`pausing 1sec before submit`);
+    await timer(1000);
 
     // submit the tx
     const transaction = await makeContractCall(txOptions).catch((err) =>

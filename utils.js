@@ -29,7 +29,8 @@ export const USTX = 1000000;
  * @default
  */
 export const STACKS_NETWORK = new StacksMainnet();
-STACKS_NETWORK.coreApiUrl = "https://stacks-node-api.stacks.co";
+STACKS_NETWORK.coreApiUrl = "http://157.245.221.74:3999";
+//STACKS_NETWORK.coreApiUrl = "https://stacks-node-api.stacks.co";
 //STACKS_NETWORK.coreApiUrl = "https://mainnet.syvita.org";
 
 /**
