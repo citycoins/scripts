@@ -9,6 +9,7 @@ import {
 } from "@stacks/transactions";
 
 export const title = chalk.bold.blue;
+export const success = chalk.bold.green;
 export const warn = chalk.bold.yellow;
 export const err = chalk.bold.red;
 
@@ -239,18 +240,46 @@ export async function getAccountTxs(address) {
  * @async
  * @function getOptimalFee
  * @param {integer} multiplier Mulitiplier for mempool average
- * @description Averages the fees for the first 200 transactions in the mempool and applies a multiplier
+ * @param {boolean} [checkAllTx=false] Boolean to check all transactions in mempool
+ * @description Averages the fees for the first 200 transactions in the mempool, or optionally all transactions, and applies a multiplier
  * @returns {integer} Optimal fee in uSTX
  */
-export async function getOptimalFee(multiplier) {
-  const url = `${STACKS_NETWORK.coreApiUrl}/extended/v1/tx?limit=200&unanchored=true`;
-  const result = await fetch(url);
-  const resultJson = await result.json();
-  const sum = resultJson.results
+export async function getOptimalFee(multiplier, checkAllTx = false) {
+  let counter = 0;
+  let total = checkAllTx ? 0 : 200;
+  let limit = 200;
+  let url = "";
+  let txResults = [];
+
+  // query the stacks-node for multiple transactions
+  do {
+    url = `${STACKS_NETWORK.coreApiUrl}/extended/v1/tx/mempool?limit=${limit}&offset=${counter}&unanchored=true`;
+    const result = await safeFetch(url);
+    // get total number of tx
+    if (total === 0) {
+      total = result.total;
+    }
+    // add all transactions to main array
+    result.results.map((tx) => {
+      txResults.push(tx);
+      counter++;
+    });
+    // output counter
+    checkAllTx && console.log(`Processed ${counter} of ${total}`);
+  } while (counter < total);
+
+  const max = txResults
     .map((fee) => parseInt(fee.fee_rate))
-    .reduce((acc, fee) => fee + acc);
-  const avg = sum / resultJson.results.length;
+    .reduce((a, b) => {
+      return a > b ? a : b;
+    });
+  console.log(`maxFee: ${(max / USTX).toFixed(6)} STX`);
+  const sum = txResults
+    .map((fee) => parseInt(fee.fee_rate))
+    .reduce((a, b) => a + b, 0);
+  const avg = sum / txResults.length;
   console.log(`avgFee: ${(avg / USTX).toFixed(6)} STX`);
+
   return avg * multiplier;
 }
 
@@ -507,6 +536,16 @@ export function printTimeStamp() {
   let newDate = new Date().toLocaleString();
   newDate = newDate.replace(/,/g, "");
   console.log(newDate);
+}
+
+/**
+ * @function exitWithSuccess
+ * @param {string} message
+ * @description Prints a final message and exits the running script
+ */
+export function exitWithSuccess(message) {
+  console.log(success(message));
+  process.exit(1);
 }
 
 /**
