@@ -239,17 +239,17 @@ export async function getAccountTxs(address) {
  * @async
  * @function getOptimalFee
  * @param {integer} multiplier Mulitiplier for mempool average
- * @description Averages the fees for the first 200 transactions in the mempool and applies a multiplier
+ * @param {boolean} checkAllTx Boolean to check all transactions in mempool
+ * @description Averages the fees for the first 200 transactions in the mempool, or optionally all transactions, and applies a multiplier
  * @returns {integer} Optimal fee in uSTX
  */
-export async function getOptimalFee(multiplier) {
+export async function getOptimalFee(multiplier, checkAllTx = false) {
   const url = `${STACKS_NETWORK.coreApiUrl}/extended/v1/tx?limit=200&unanchored=true`;
-  const result = await fetch(url);
-  const resultJson = await result.json();
-  const sum = resultJson.results
+  const result = await safeFetch(url);
+  const sum = result.results
     .map((fee) => parseInt(fee.fee_rate))
     .reduce((acc, fee) => fee + acc);
-  const avg = sum / resultJson.results.length;
+  const avg = sum / result.results.length;
   console.log(`avgFee: ${(avg / USTX).toFixed(6)} STX`);
   return avg * multiplier;
 }
