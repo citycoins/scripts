@@ -9,6 +9,7 @@ import {
 } from "@stacks/transactions";
 
 export const title = chalk.bold.blue;
+export const success = chalk.bold.green;
 export const warn = chalk.bold.yellow;
 export const err = chalk.bold.red;
 
@@ -535,6 +536,16 @@ export function printTimeStamp() {
   let newDate = new Date().toLocaleString();
   newDate = newDate.replace(/,/g, "");
   console.log(newDate);
+}
+
+/**
+ * @function exitWithSuccess
+ * @param {string} message
+ * @description Prints a final message and exits the running script
+ */
+export function exitWithSuccess(message) {
+  console.log(success(message));
+  process.exit(1);
 }
 
 /**
