@@ -3,7 +3,7 @@
 <head>
     
     <meta charset="utf-8">
-    <title>Home - Documentation</title>
+    <title>getnetworkstatus.js - Documentation</title>
     
     
     <script src="scripts/prettify/prettify.js"></script>
@@ -32,54 +32,59 @@
 
 <div id="main">
     
+    <h1 class="page-title">getnetworkstatus.js</h1>
+    
 
     
 
 
 
     
+    <section>
+        <article>
+            <pre class="prettyprint source linenums"><code>import console from "console";
+import prompts from "prompts";
+import {
+  exitWithError,
+  getBlockHeight,
+  getOptimalFee,
+  getTotalMempoolTx,
+} from "./utils.js";
 
+/** @module GetNetworkStatus */
 
-    <section class="package">
-        <h3> </h3>		
-    </section>
+/**
+ * @async
+ * @function getNetworkStatus
+ * @description Gets the current block height, mempool size, and average fees
+ */
+async function getNetworkStatus() {
+  const userConfig = await prompts({
+    type: "confirm",
+    name: "checkAllTx",
+    message: "Check all TX? (default: first 200)",
+    initial: false,
+  });
+  // get current block height
+  const currentBlock = await getBlockHeight().catch((err) =>
+    exitWithError(`getBlockHeight err: ${err}`)
+  );
+  console.log(`currentBlock: ${currentBlock}`);
+  // get current mempool size
+  const mempoolTxCount = await getTotalMempoolTx().catch((err) =>
+    exitWithError(`getTotalMempoolTx err: ${err}`)
+  );
+  console.log(`mempoolTxCount: ${mempoolTxCount}`);
+  // get estimated fee based on mempool average fees
+  await getOptimalFee(1, userConfig.checkAllTx).catch((err) =>
+    exitWithError(`getOptimalFee err: ${err}`)
+  );
+}
 
-
-
-
-
-
-
-
-
-    
-
-
-
-    <section class="readme usertext">
-        <article><h1>CityCoins Scripts</h1>
-<p>The code for a set of Node.js scripts and utilities to interact with the CityCoins protocol.</p>
-<p>For more details on a specific script, please <a href="https://github.com/citycoins/scripts">visit the GitHub Repo</a>.</p>
-<h2>Requirements</h2>
-<ul>
-<li><a href="https://nodejs.org/en/">Node.js / NPM</a> (or <a href="https://github.com/nvm-sh/nvm">nvm</a> for Mac/Linux)</li>
-</ul>
-<h2>Installation</h2>
-<p>Clone this repository using either <code>ssh</code> or <code>https</code>:</p>
-<pre class="prettyprint source lang-bash"><code>git clone git@github.com:citycoins/scripts.git
-OR
-git clone https://github.com/citycoins/scripts.git
+getNetworkStatus();
 </code></pre>
-<p>Enter the directory for the scripts and install the prequisites:</p>
-<pre class="prettyprint source lang-bash"><code>cd scripts
-npm install
-</code></pre>
-<p>Any scripts listed in the table above can be run using the following command:</p>
-<pre class="prettyprint source lang-bash"><code>node scriptname.js
-</code></pre></article>
+        </article>
     </section>
-
-
 
 
 

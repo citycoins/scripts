@@ -3,7 +3,7 @@
 <head>
     
     <meta charset="utf-8">
-    <title>Home - Documentation</title>
+    <title>gettxstatus.js - Documentation</title>
     
     
     <script src="scripts/prettify/prettify.js"></script>
@@ -32,54 +32,141 @@
 
 <div id="main">
     
+    <h1 class="page-title">gettxstatus.js</h1>
+    
 
     
 
 
 
     
+    <section>
+        <article>
+            <pre class="prettyprint source linenums"><code>import console from "console";
+import prompts from "prompts";
+import {
+  cancelPrompt,
+  err,
+  exitWithError,
+  exitWithSuccess,
+  printDivider,
+  printTimeStamp,
+  safeFetch,
+  STACKS_NETWORK,
+  timer,
+  title,
+  USTX,
+  warn,
+} from "./utils.js";
 
+/** @module GetTxStatus */
 
-    <section class="package">
-        <h3> </h3>		
-    </section>
+/**
+ * @async
+ * @function promptUserConfig
+ * @description Prompts the user for configuration options at the start of the script
+ * @returns {Object[]} An object that contains properties for each question name and related answers as a values
+ */
+async function promptUserConfig() {
+  const questions = [
+    {
+      type: "text",
+      name: "txid",
+      message: "TXID to check?",
+      validate: (value) => (value === "" ? "TXID is required" : true),
+    },
+    {
+      type: "number",
+      name: "interval",
+      message: "Interval (minutes) to check?",
+      validate: (value) =>
+        value > 14 ? true : "Interval must be 15min or greater",
+    },
+  ];
+  const userConfig = await prompts(questions, { onCancel: cancelPrompt });
+  return userConfig;
+}
 
+/**
+ * @async
+ * @function getTxStatus
+ * @param {Object[]} userConfig An object that contains properties for each question name and related answers as a values
+ * @description Gets the status for a provided TXID on a set interval
+ */
+async function getTxStatus(userConfig) {
+  let count = 0;
+  const countLimit = 100;
+  const url = `${STACKS_NETWORK.coreApiUrl}/extended/v1/tx/${userConfig.txid}`;
+  const interval = userConfig.interval * 60 * 1000;
 
+  do {
+    const txResult = await safeFetch(url);
+    printDivider();
+    console.log(
+      title(
+        `TX STATUS: ${
+          txResult.hasOwnProperty("tx_status")
+            ? txResult.tx_status.toUpperCase()
+            : "PENDING"
+        }`
+      )
+    );
+    printDivider();
+    printTimeStamp();
 
+    // exit if success or fail
+    if (txResult.tx_status === "success") {
+      exitWithSuccess(
+        `tx succeeded, exiting...\ntxid: ${txResult.tx_id}\nhttps://explorer.stacks.co/txid/${txResult.tx_id}`
+      );
+    }
+    if (txResult.tx_status === "abort_by_post_condition") {
+      exitWithError(
+        `tx failed, exiting...\ntxid: ${txResult.tx_id}\nhttps://explorer.stacks.co/txid/${txResult.tx_id}`
+      );
+    }
 
+    // log tx details
+    console.log(
+      `account: ${txResult.sender_address.slice(
+        0,
+        5
+      )}...${txResult.sender_address.slice(txResult.sender_address.length - 5)}`
+    );
+    console.log(`nonce: ${txResult.nonce}`);
+    console.log(`fee: ${(txResult.fee_rate / USTX).toFixed(6)} STX`);
+    const submitDate = new Date(txResult.receipt_time_iso);
+    const submitted = submitDate.toLocaleString().replace(/,/g, "");
+    console.log(`submitted: ${submitted}`);
+    // calculate time passed since submission in hours
+    const currentDate = new Date();
+    const timePassed = (
+      (currentDate.getTime() - submitDate.getTime()) /
+      1000 /
+      60 /
+      60
+    ).toFixed(2);
+    // add color if pending for a long time
+    if (parseInt(timePassed) > 4) {
+      console.log(err(`timePassed: ${timePassed} hours`));
+    } else if (parseInt(timePassed) > 2) {
+      console.log(warn(`timePassed: ${timePassed} hours`));
+    } else {
+      console.log(`timePassed: ${timePassed} hours`);
+    }
+    // print link to tx on explorer
+    console.log(`https://explorer.stacks.co/txid/${txResult.tx_id}`);
 
+    // pause before checking again
+    await timer(interval);
+    count++;
+  } while (count &lt; countLimit);
+}
 
-
-
-
-    
-
-
-
-    <section class="readme usertext">
-        <article><h1>CityCoins Scripts</h1>
-<p>The code for a set of Node.js scripts and utilities to interact with the CityCoins protocol.</p>
-<p>For more details on a specific script, please <a href="https://github.com/citycoins/scripts">visit the GitHub Repo</a>.</p>
-<h2>Requirements</h2>
-<ul>
-<li><a href="https://nodejs.org/en/">Node.js / NPM</a> (or <a href="https://github.com/nvm-sh/nvm">nvm</a> for Mac/Linux)</li>
-</ul>
-<h2>Installation</h2>
-<p>Clone this repository using either <code>ssh</code> or <code>https</code>:</p>
-<pre class="prettyprint source lang-bash"><code>git clone git@github.com:citycoins/scripts.git
-OR
-git clone https://github.com/citycoins/scripts.git
+promptUserConfig().then((answers) => getTxStatus(answers));
 </code></pre>
-<p>Enter the directory for the scripts and install the prequisites:</p>
-<pre class="prettyprint source lang-bash"><code>cd scripts
-npm install
-</code></pre>
-<p>Any scripts listed in the table above can be run using the following command:</p>
-<pre class="prettyprint source lang-bash"><code>node scriptname.js
-</code></pre></article>
+        </article>
     </section>
-
-
 
 
 
