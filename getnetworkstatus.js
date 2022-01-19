@@ -1,4 +1,5 @@
 import console from "console";
+import prompts from "prompts";
 import {
   exitWithError,
   getBlockHeight,
@@ -8,7 +9,18 @@ import {
 
 /** @module GetNetworkStatus */
 
+/**
+ * @async
+ * @function getNetworkStatus
+ * @description Gets the current block height, mempool size, and average fees
+ */
 async function getNetworkStatus() {
+  const userConfig = await prompts({
+    type: "confirm",
+    name: "checkAllTx",
+    message: "Check all TX? (default: first 200)",
+    initial: false,
+  });
   // get current block height
   const currentBlock = await getBlockHeight().catch((err) =>
     exitWithError(`getBlockHeight err: ${err}`)
@@ -20,7 +32,7 @@ async function getNetworkStatus() {
   );
   console.log(`mempoolTxCount: ${mempoolTxCount}`);
   // get estimated fee based on mempool average fees
-  await getOptimalFee(1).catch((err) =>
+  await getOptimalFee(1, userConfig.checkAllTx).catch((err) =>
     exitWithError(`getOptimalFee err: ${err}`)
   );
 }
