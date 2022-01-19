@@ -1,6 +1,7 @@
 import console from "console";
 import prompts from "prompts";
 import {
+  cancelPrompt,
   exitWithError,
   getBlockHeight,
   getRewardCycle,
@@ -65,11 +66,8 @@ async function promptUserConfig() {
       }
     }
   };
-  const cancel = (prompt) => {
-    exitWithError(`ERROR: cancelled by user at ${prompt.name}, exiting...`);
-  };
   const userConfig = await prompts(questions, {
-    onCancel: cancel,
+    onCancel: cancelPrompt,
     onSubmit: submit,
   });
   return userConfig;
@@ -108,7 +106,7 @@ async function getStackingInfo() {
     userConfig.contractName,
     userConfig.stxAddress
   ).catch((err) => exitWithError(`getUserId err: ${err}`));
-  console.log(`UserId: ${userId}`);
+  console.log(`userId: ${userId}`);
 
   printDivider();
 

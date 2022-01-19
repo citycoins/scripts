@@ -29,7 +29,29 @@ export const USTX = 1000000;
  * @default
  */
 export const STACKS_NETWORK = new StacksMainnet();
+//STACKS_NETWORK.coreApiUrl = "http://157.245.221.74:3999";
 STACKS_NETWORK.coreApiUrl = "https://stacks-node-api.stacks.co";
+//STACKS_NETWORK.coreApiUrl = "https://mainnet.syvita.org";
+
+/**
+ * @async
+ * @function safeFetch
+ * @param {string} url URL to fetch JSON content from
+ * @description Returns the JSON content from the specified URL
+ * @returns {Object[]} JSON object
+ */
+export async function safeFetch(url) {
+  // wrapper to handle common errors for fetching from the API
+  const response = await fetch(url);
+  if (response.status === 200) {
+    // success
+    const responseJson = await response.json();
+    return responseJson;
+  } else {
+    // error
+    exitWithError(`safeFetch err: ${response.status} ${response.statusText}`);
+  }
+}
 
 /**
  * @async
@@ -38,6 +60,15 @@ STACKS_NETWORK.coreApiUrl = "https://stacks-node-api.stacks.co";
  * @description Sleeps for the given amount of milliseconds
  */
 export const timer = (ms) => new Promise((res) => setTimeout(res, ms));
+
+/**
+ * @function cancelPrompt
+ * @param {Object[]} prompt An object that contains the current prompt displayed to the user
+ * @description Catches a cancel event in prompts, sets the message, and exits the AutoMiner
+ */
+export const cancelPrompt = (prompt) => {
+  exitWithError(`ERROR: cancelled by user at ${prompt.name}, exiting...`);
+};
 
 /**
  * @async
@@ -133,9 +164,8 @@ export async function getStxBalance(address) {
  */
 export async function getNonce(address) {
   const url = `${STACKS_NETWORK.coreApiUrl}/v2/accounts/${address}?proof=0`;
-  const result = await fetch(url);
-  const resultJson = await result.json();
-  return resultJson.nonce;
+  const result = await safeFetch(url);
+  return result.nonce;
 }
 
 /**
@@ -293,6 +323,8 @@ async function getBlockAvg(
       i
     );
     blockStats.push(result);
+    // avoid API rate limiting
+    await timer(1000);
   }
 
   const sum = blockStats.reduce((a, b) => parseInt(a) + parseInt(b), 0);
@@ -330,10 +362,10 @@ async function getMiningStatsAtBlock(
 /**
  * @async
  * @function getStackerAtCycleOrDefault
- * @param {string} contractAddress
- * @param {string} contractName
- * @param {integer} cycleId
- * @param {integer} userId
+ * @param {string} contractAddress STX address of the contract deployer
+ * @param {string} contractName Name of the contract
+ * @param {integer} cycleId Reward cycle to query
+ * @param {integer} userId User ID to query
  * @description Returns the amount stacked and amount to return for a given cycle and user
  * @returns {Object[]}
  */
@@ -358,10 +390,10 @@ export async function getStackerAtCycleOrDefault(
 /**
  * @async
  * @function getStackingReward
- * @param {string} contractAddress
- * @param {string} contractName
- * @param {integer} cycleId
- * @param {integer} userId
+ * @param {string} contractAddress STX address of the contract deployer
+ * @param {string} contractName Name of the contract
+ * @param {integer} cycleId Reward cycle to query
+ * @param {integer} userId User ID to query
  * @description Returns the amount of STX a user can claim in a given reward cycle in uSTX.
  * @returns {integer}
  */
@@ -386,9 +418,9 @@ export async function getStackingReward(
 /**
  * @async
  * @function getUserId
- * @param {string} contractAddress
- * @param {string} contractName
- * @param {string} address
+ * @param {string} contractAddress STX address of the contract deployer
+ * @param {string} contractName Name of the contract
+ * @param {string} address Stacks address to query
  * @description Returns the userId in the CityCoin contract for a given address
  * @returns {integer}
  */
@@ -408,9 +440,9 @@ export async function getUserId(contractAddress, contractName, address) {
 /**
  * @async
  * @function getRewardCycle
- * @param {string} contractAddress
- * @param {string} contractName
- * @param {integer} blockHeight
+ * @param {string} contractAddress STX address of the contract deployer
+ * @param {string} contractName Name of the contract
+ * @param {integer} blockHeight Block height to query
  * @description Returns the reward cycle for a given block height
  * @returns {integer}
  */
@@ -429,6 +461,34 @@ export async function getRewardCycle(
   });
   const result = cvToJSON(resultCv);
   return parseInt(result.value.value);
+}
+
+/**
+ * @async
+ * @function canClaimMiningReward
+ * @param {string} contractAddress
+ * @param {string} contractName
+ * @param {string} address
+ * @param {integer} blockHeight
+ * @description Returns true if the user can claim a reward for a given block height
+ * @returns {bool}
+ */
+export async function canClaimMiningReward(
+  contractAddress,
+  contractName,
+  address,
+  blockHeight
+) {
+  const resultCv = await callReadOnlyFunction({
+    contractAddress: contractAddress,
+    contractName: contractName,
+    functionName: "can-claim-mining-reward",
+    functionArgs: [standardPrincipalCV(address), uintCV(blockHeight)],
+    network: STACKS_NETWORK,
+    senderAddress: contractAddress,
+  });
+  const result = cvToJSON(resultCv);
+  return result.value;
 }
 
 /**

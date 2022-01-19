@@ -16,6 +16,7 @@ import {
   getOptimalFee,
   getNonce,
   STACKS_NETWORK,
+  cancelPrompt,
 } from "./utils.js";
 import {
   uintCV,
@@ -28,15 +29,6 @@ import {
 } from "@stacks/transactions";
 
 /** @module AutoMiner */
-
-/**
- * @function cancel
- * @param {Object[]} prompt An object that contains the current prompt displayed to the user
- * @description Catches a cancel event in prompts, sets the message, and exits the AutoMiner
- */
-const cancel = (prompt) => {
-  exitWithError(`ERROR: cancelled by user at ${prompt.name}, exiting...`);
-};
 
 /**
  * @async
@@ -150,7 +142,7 @@ async function promptUserConfig() {
     }
   };
   const userConfig = await prompts(questions, {
-    onCancel: cancel,
+    onCancel: cancelPrompt,
     onSubmit: submit,
   });
   return userConfig;
@@ -191,7 +183,7 @@ async function promptMiningStrategy() {
     },
   ];
   const miningStrategy = await prompts(miningStrategyQuestions, {
-    onCancel: cancel,
+    onCancel: cancelPrompt,
   });
   // verify max commit set by user or exit
   const confirmMax = await prompts(
@@ -203,7 +195,7 @@ async function promptMiningStrategy() {
       ).toFixed(6)} STX?`,
     },
     {
-      onCancel: cancel,
+      onCancel: cancelPrompt,
     }
   );
   if (!confirmMax) {
@@ -228,7 +220,7 @@ async function promptFeeStrategy() {
       validate: (value) => (value > 0 ? true : "Value must be greater than 0"),
     },
     {
-      onCancel: cancel,
+      onCancel: cancelPrompt,
     }
   );
   return feeMultiplier;
@@ -274,7 +266,7 @@ async function autoMine(userConfig, miningStrategy = {}, firstRun = true) {
           ).toFixed(6)} STX`,
         },
         {
-          onCancel: cancel,
+          onCancel: cancelPrompt,
         }
       );
       // exit if not confirmed
@@ -310,7 +302,7 @@ async function autoMine(userConfig, miningStrategy = {}, firstRun = true) {
           ).toFixed(6)} STX`,
         },
         {
-          onCancel: cancel,
+          onCancel: cancelPrompt,
         }
       );
       if (!confirmFee) {
@@ -484,7 +476,7 @@ async function autoMine(userConfig, miningStrategy = {}, firstRun = true) {
           sumCV.value
         ),
       ],
-      STACKS_NETWORK,
+      network: STACKS_NETWORK,
     };
 
     // pause 10sec
@@ -539,6 +531,4 @@ console.log(warn("USE AT YOUR OWN RISK. PLEASE REPORT ANY ISSUES ON GITHUB."));
 printDivider();
 console.log(title("STATUS: SETTING USER CONFIG"));
 printDivider();
-promptUserConfig().then((answers) => {
-  autoMine(answers);
-});
+promptUserConfig().then((answers) => autoMine(answers));
