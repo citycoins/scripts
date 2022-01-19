@@ -6,10 +6,11 @@ All functions are documented using [JSDoc](https://jsdoc.app/about-getting-start
 
 To learn more about a specific script, click on the link below.
 
-| Name                                              | Description                                       |
-| ------------------------------------------------- | ------------------------------------------------- |
-| [`autominer.js`](./info/autominer.md)             | Utility for continously mining CityCoins          |
-| [`getstackinginfo.js`](./info/getstackinginfo.md) | Get the current Stacking info for a given address |
+| Name                                                  | Description                                       |
+| ----------------------------------------------------- | ------------------------------------------------- |
+| [`autominer.js`](./info/autominer.md)                 | Utility for continously mining CityCoins          |
+| [`autominingclaimer.js`](./info/autominingclaimer.md) | Utility for claiming CityCoin mining rewards      |
+| [`getstackinginfo.js`](./info/getstackinginfo.md)     | Get the current Stacking info for a given address |
 
 All of the scripts use [prompts](https://github.com/terkelg/prompts) to gather the required information, and nothing is stored on disk.
 
