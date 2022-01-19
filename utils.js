@@ -323,6 +323,8 @@ async function getBlockAvg(
       i
     );
     blockStats.push(result);
+    // avoid API rate limiting
+    await timer(1000);
   }
 
   const sum = blockStats.reduce((a, b) => parseInt(a) + parseInt(b), 0);
