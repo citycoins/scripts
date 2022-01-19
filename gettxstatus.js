@@ -36,7 +36,7 @@ async function promptUserConfig() {
       name: "interval",
       message: "Interval (minutes) to check?",
       validate: (value) =>
-        value > 0 ? true : "Interval must be 15min or greater",
+        value > 14 ? true : "Interval must be 15min or greater",
     },
   ];
   const userConfig = await prompts(questions, { onCancel: cancelPrompt });
