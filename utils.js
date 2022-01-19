@@ -158,6 +158,32 @@ export async function getStxBalance(address) {
 
 /**
  * @async
+ * @function getCityCoinBalance
+ * @param {string} contractAddress STX address of the contract deployer
+ * @param {string} contractName Name of the contract
+ * @param {string} stxAddress STX address to query
+ * @returns {integer} Total balance of CityCoins
+ */
+export async function getCityCoinBalance(
+  contractAddress,
+  contractName,
+  stxAddress
+) {
+  const resultCV = await callReadOnlyFunction({
+    contractAddress: contractAddress,
+    contractName: contractName,
+    functionName: "get-balance",
+    functionArgs: [standardPrincipalCV(stxAddress)],
+    network: STACKS_NETWORK,
+    senderAddress: contractAddress,
+  });
+  const result = cvToJSON(resultCV);
+  //console.log(JSON.stringify(result));
+  return parseInt(result.value.value);
+}
+
+/**
+ * @async
  * @function getNonce
  * @param {string} address STX address to query
  * @description Returns the current nonce for the given address
