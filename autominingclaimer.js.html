@@ -3,7 +3,7 @@
 <head>
     
     <meta charset="utf-8">
-    <title>getstackinginfo.js - Documentation</title>
+    <title>autominingclaimer.js - Documentation</title>
     
     
     <script src="scripts/prettify/prettify.js"></script>
@@ -32,7 +32,7 @@
 
 <div id="main">
     
-    <h1 class="page-title">getstackinginfo.js</h1>
+    <h1 class="page-title">autominingclaimer.js</h1>
     
 
     
@@ -42,21 +42,40 @@
     
     <section>
         <article>
-            <pre class="prettyprint source linenums"><code>import console from "console";
+            <pre class="prettyprint source linenums"><code>import BN from "bn.js";
 import prompts from "prompts";
 import {
   cancelPrompt,
-  exitWithError,
   getBlockHeight,
-  getRewardCycle,
-  getStackerAtCycleOrDefault,
-  getStackingReward,
-  getUserId,
   printDivider,
   printTimeStamp,
+  timer,
+  USTX,
+  title,
+  exitWithError,
+  getNonce,
+  STACKS_NETWORK,
+  canClaimMiningReward,
+  safeFetch,
+  warn,
 } from "./utils.js";
+import {
+  uintCV,
+  PostConditionMode,
+  makeContractCall,
+  broadcastTransaction,
+  AnchorMode,
+} from "@stacks/transactions";
 
-/** @module GetStackingInfo */
+/** @module AutoMiningClaimer */
+
+/**
+ * @constant
+ * @type {integer}
+ * @description Default fee to use when no custom fee is set
+ * @default
+ */
+const defaultFee = 100000;
 
 /**
  * @async
@@ -69,7 +88,7 @@ async function promptUserConfig() {
     {
       type: "select",
       name: "citycoin",
-      message: "Select a CityCoin to look up stacking info:",
+      message: "Select a CityCoin to look up mining claims:",
       choices: [
         { title: "MiamiCoin (MIA)", value: "MIA" },
         { title: "NewYorkCityCoin (NYC)", value: "NYC" },
@@ -78,20 +97,28 @@ async function promptUserConfig() {
     {
       type: "text",
       name: "stxAddress",
-      message: "Stacks Address to search for?",
+      message: "Stacks Address to claim with?",
       validate: (value) => (value === "" ? "Stacks address is required" : true),
     },
     {
-      type: "confirm",
-      name: "searchAllCycles",
-      message: "Search all cycles?",
-      initial: true,
+      type: "password",
+      name: "stxPrivateKey",
+      message: "Private Key for Stacks Address?",
+      validate: (value) =>
+        value === "" ? "Stacks private key is required" : true,
     },
     {
-      type: (prev) => (prev === true ? null : "number"),
-      name: "targetCycle",
-      message: "Target cycle?",
-      validate: (value) => (value === "" ? "Target cycle is required" : true),
+      type: "confirm",
+      name: "customFee",
+      message: `Set custom fee? (default ${(defaultFee / USTX).toFixed(
+        6
+      )} STX)`,
+    },
+    {
+      type: (prev) => (prev ? "number" : null),
+      name: "customFeeValue",
+      message: "Custom fee value in uSTX? (1,000,000 uSTX = 1 STX)",
+      validate: (value) => (value > 0 ? true : "Value must be greater than 0"),
     },
   ];
   const submit = (prompt, answer, answers) => {
@@ -100,12 +127,12 @@ async function promptUserConfig() {
         case "MIA":
           answers.contractAddress = "SP466FNC0P7JWTNM2R9T199QRZN1MYEDTAR0KP27";
           answers.contractName = "miamicoin-core-v1";
-          answers.tokenSymbol = "MIA";
+          answers.blockWinnersUrl = "https://miamining.com/winners";
           break;
         case "NYC":
           answers.contractAddress = "SP2H8PY27SEZ03MWRKS5XABZYQN17ETGQS3527SA5";
           answers.contractName = "newyorkcitycoin-core-v1";
-          answers.tokenSymbol = "NYC";
+          answers.blockWinnersUrl = "https://mining.nyc/winners";
           break;
       }
     }
@@ -119,17 +146,11 @@ async function promptUserConfig() {
 
 /**
  * @async
- * @function getStackingInfo
- * @description Displays a table with the stacking info for a given Stacks address
+ * @function autoMiningClaimer
+ * @param {Object[]} userConfig
+ * @description Searches for won blocks and submits the related claim transactions
  */
-async function getStackingInfo() {
-  const stackingStats = [];
-  const maxCycles = 32;
-
-  const userConfig = await promptUserConfig().catch((err) =>
-    exitWithError(`promptUserConfig err: ${err}`)
-  );
-
+async function autoMiningClaimer(userConfig) {
   printDivider();
   printTimeStamp();
 
@@ -138,89 +159,134 @@ async function getStackingInfo() {
   );
   console.log(`currentBlockHeight: ${currentBlockHeight}`);
 
-  const currentCycle = await getRewardCycle(
-    userConfig.contractAddress,
-    userConfig.contractName,
-    currentBlockHeight
-  ).catch((err) => exitWithError(`getRewardCycle err: ${err}`));
-  console.log(`currentCycle: ${currentCycle}`);
+  const blockWinners = await safeFetch(userConfig.blockWinnersUrl);
 
-  const userId = await getUserId(
-    userConfig.contractAddress,
-    userConfig.contractName,
-    userConfig.stxAddress
-  ).catch((err) => exitWithError(`getUserId err: ${err}`));
-  console.log(`userId: ${userId}`);
-
-  printDivider();
-
-  if (userConfig.searchAllCycles) {
-    console.log(`Checking cycles 1 to ${currentCycle + maxCycles}...`);
-    console.log(
-      `Note: stxReward will show 0 unless there are rewards to claim`
-    );
-    let i = 0;
-    do {
-      const stacker = await getStackerAtCycleOrDefault(
-        userConfig.contractAddress,
-        userConfig.contractName,
-        i + 1,
-        userId
-      );
-      let stackingReward = 0;
-      if (i &lt;= currentCycle) {
-        stackingReward = await getStackingReward(
-          userConfig.contractAddress,
-          userConfig.contractName,
-          i + 1,
-          userId
-        );
+  // get all blocks won from Jamils explorer
+  const blocksWon = [];
+  const blocksUnclaimed = [];
+  for (const block in blockWinners) {
+    if (blockWinners[block].miner === userConfig.stxAddress) {
+      blocksWon.push(block);
+      if (!blockWinners[block].claimed) {
+        blocksUnclaimed.push(block);
       }
-      stackingStats.push({
-        CityCoin: userConfig.tokenSymbol,
-        Cycle: i + 1,
-        amountStacked: parseInt(stacker.value.amountStacked.value),
-        toReturn: parseInt(stacker.value.toReturn.value),
-        stxReward: stackingReward,
-      });
-      if (i > currentCycle) {
-        if (parseInt(stacker.value.amountStacked.value) === 0) {
-          console.log(`Stopping at cycle ${i + 1} due to 0 amount stacked`);
-          break;
-        }
-      }
-      i++;
-    } while (i &lt; currentCycle + maxCycles);
-  } else {
-    console.log(`Checking cycle ${userConfig.targetCycle}...`);
-    console.log(
-      `Note: stxReward will show 0 unless there are rewards to claim`
-    );
-    const stacker = await getStackerAtCycleOrDefault(
-      userConfig.contractAddress,
-      userConfig.contractName,
-      userConfig.targetCycle,
-      userId
-    );
-    const stackingReward = await getStackingReward(
-      userConfig.contractAddress,
-      userConfig.contractName,
-      userConfig.targetCycle,
-      userId
-    );
-    stackingStats.push({
-      CityCoin: userConfig.tokenSymbol,
-      Cycle: userConfig.targetCycle,
-      amountStacked: parseInt(stacker.value.amountStacked.value),
-      toReturn: parseInt(stacker.value.toReturn.value),
-      stxReward: stackingReward,
-    });
+    }
   }
 
-  console.table(stackingStats);
+  // reverse array to start with highest block number
+  blocksUnclaimed.reverse();
+
+  // double-check that blocksUnclaimed is accurate by querying the contract for each block height
+  console.log(`Checking ${blocksUnclaimed.length} unclaimed blocks...`);
+
+  const claimLimit = 24;
+  const blocksToClaim = [];
+  let checkCounter = 0;
+  do {
+    printDivider();
+    console.log(`block ${checkCounter + 1} of ${blocksUnclaimed.length}`);
+    console.log(`block: ${blocksUnclaimed[checkCounter]}`);
+    // pause between requests to avoid rate limits
+    // await timer(1000);
+    // check if user can claim mining reward
+    const canClaim = await canClaimMiningReward(
+      userConfig.contractAddress,
+      userConfig.contractName,
+      userConfig.stxAddress,
+      blocksUnclaimed[checkCounter]
+    ).catch((err) => exitWithError(`canClaimMiningReward err: ${err}`));
+    console.log(`canClaim: ${canClaim}`);
+    if (canClaim) {
+      // add block height to claim array
+      blocksToClaim.push(blocksUnclaimed[checkCounter]);
+      console.log(`blocksToClaim: ${blocksToClaim.length}`);
+    }
+    // increment counter
+    checkCounter++;
+  } while (
+    blocksToClaim.length &lt; claimLimit &amp;&amp;
+    checkCounter &lt; blocksUnclaimed.length
+  );
+
+  printDivider();
+  console.log(`total blocks to claim: ${blocksToClaim.length}`);
+
+  printDivider();
+  console.log(title("STATUS: CLAIMING MINING REWARDS"));
+
+  // get the current nonce
+  let nonce = await getNonce(userConfig.stxAddress).catch((err) =>
+    exitWithError(`getNonce err: ${err}`)
+  );
+
+  const counterLimit = blocksToClaim.length &lt; 24 ? blocksToClaim.length : 24;
+  for (let i = 0; i &lt; counterLimit; i++) {
+    printDivider();
+    console.log(
+      `account: ${userConfig.stxAddress.slice(
+        0,
+        5
+      )}...${userConfig.stxAddress.slice(userConfig.stxAddress.length - 5)}`
+    );
+    console.log(`nonce: ${nonce + i}`);
+    console.log(`claiming block: ${blocksToClaim[i]}`);
+    // set the fee
+    const feeRate = userConfig.hasOwnProperty("customFeeValue")
+      ? userConfig.customFeeValue
+      : defaultFee;
+    // set the block height to claim
+    const blockHeightCV = uintCV(parseInt(blocksToClaim[i]));
+    // create the claim tx
+    const txOptions = {
+      contractAddress: userConfig.contractAddress,
+      contractName: userConfig.contractName,
+      functionName: "claim-mining-reward",
+      functionArgs: [blockHeightCV],
+      senderKey: userConfig.stxPrivateKey,
+      fee: new BN(feeRate),
+      nonce: new BN(nonce + i),
+      postConditionMode: PostConditionMode.Deny,
+      postConditions: [],
+      network: STACKS_NETWORK,
+      anchorMode: AnchorMode.Any,
+    };
+
+    // pause 1sec
+    console.log(`pausing 1sec before submit`);
+    await timer(1000);
+
+    // submit the tx
+    const transaction = await makeContractCall(txOptions).catch((err) =>
+      exitWithError(`makeContractCall err: ${err}`)
+    );
+    console.log(`https://explorer.stacks.co/txid/${transaction.txid()}`);
+    await broadcastTransaction(transaction, STACKS_NETWORK).catch((err) =>
+      exitWithError(`broadcastTransaction err: ${err}`)
+    );
+  }
+
+  printDivider();
+  console.log(`No more blocks to claim or claim limit reached.`);
 }
 
-getStackingInfo();
+// show title and disclaimer on first run
+printDivider();
+console.log(title("CITYCOINS AUTOMININGCLAIMER"));
+printDivider();
+console.log(
+  "This utility provides a simple, easy-to-use, prompt-driven interface for checking if an address won any blocks, and if so, automatically submits the claim transaction.\n"
+);
+console.log(
+  "THIS IS ALPHA SOFTWARE THAT REQUIRES A STACKS PRIVATE KEY TO SEND A TRANSACTION.\n"
+);
+console.log("THE CODE IS FOR EDUCATIONAL AND DEMONSTRATION PURPOSES ONLY.\n");
+console.log(warn("USE AT YOUR OWN RISK. PLEASE REPORT ANY ISSUES ON GITHUB."));
+
+// get the user config and start the AutoClaimer
+printDivider();
+console.log(title("STATUS: SETTING USER CONFIG"));
+printDivider();
+promptUserConfig().then((answers) => autoMiningClaimer(answers));
 </code></pre>
         </article>
     </section>
