@@ -2,7 +2,7 @@
 
 The code for a set of Node.js scripts and utilities to interact with the CityCoins protocol.
 
-For more details on a specific script, please [visit the GitHub Repo](https://github.com/citycoins/scripts).
+For more details on a specific script, please [visit the GitHub Repo](https://github.com/citycoins/scripts/info).
 
 ## Requirements
 

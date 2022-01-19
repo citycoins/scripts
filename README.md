@@ -10,7 +10,9 @@ To learn more about a specific script, click on the link below.
 | ----------------------------------------------------- | ------------------------------------------------- |
 | [`autominer.js`](./info/autominer.md)                 | Utility for continously mining CityCoins          |
 | [`autominingclaimer.js`](./info/autominingclaimer.md) | Utility for claiming CityCoin mining rewards      |
+| [`getnetworkstatus.js`](./info/getnetworkstatus.md)   | Utility for getting the current network status    |
 | [`getstackinginfo.js`](./info/getstackinginfo.md)     | Get the current Stacking info for a given address |
+| [`gettxstatus.js`](./info/gettxstatus.md)             | Get the current status of a given transaction     |
 
 All of the scripts use [prompts](https://github.com/terkelg/prompts) to gather the required information, and nothing is stored on disk.
 
