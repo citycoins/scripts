@@ -463,6 +463,16 @@ export async function getRewardCycle(
   return parseInt(result.value.value);
 }
 
+/**
+ * @async
+ * @function canClaimMiningReward
+ * @param {string} contractAddress
+ * @param {string} contractName
+ * @param {string} address
+ * @param {integer} blockHeight
+ * @description Returns true if the user can claim a reward for a given block height
+ * @returns {bool}
+ */
 export async function canClaimMiningReward(
   contractAddress,
   contractName,
