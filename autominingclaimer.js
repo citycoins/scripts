@@ -100,6 +100,12 @@ async function promptUserConfig() {
   return userConfig;
 }
 
+/**
+ * @async
+ * @function autoMiningClaimer
+ * @param {Object[]} userConfig
+ * @description Searches for won blocks and submits the related claim transactions
+ */
 async function autoMiningClaimer(userConfig) {
   printDivider();
   printTimeStamp();
@@ -201,7 +207,7 @@ async function autoMiningClaimer(userConfig) {
       anchorMode: AnchorMode.Any,
     };
 
-    // pause 2sec
+    // pause 1sec
     console.log(`pausing 1sec before submit`);
     await timer(1000);
 
