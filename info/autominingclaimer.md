@@ -10,6 +10,9 @@ This utility provides a simple, easy-to-use, prompt-driven interface for checkin
 
 - [Obtaining the Private Key](#obtaining-the-private-key)
 - [Running the AutoMiningClaimer](#running-the-autominingclaimer)
+- [AutoMiningClaimer Configuration](#autominingclaimer-configuration)
+  - [User Config](#user-config)
+  - [How it Works](#how-it-works)
 
 ## Obtaining the Private Key
 
@@ -26,3 +29,31 @@ The miner will prompt for information on the first transaction, and use the info
 ```bash
 node autominingclaimer.js
 ```
+
+## AutoMiningClaimer Configuration
+
+### User Config
+
+| Name           | Prompt                                             | Desc                                      |
+| -------------- | -------------------------------------------------- | ----------------------------------------- |
+| citycoin       | Select a CityCoin to mine:                         | Sets target contract values in userConfig |
+| stxAddress     | Stacks Address to mine with?                       | Stacks address used for mining            |
+| stxPrivateKey  | Private Key for Stacks Address?                    | Hex encoded private key used to submit tx |
+| customFee      | Set custom fee?                                    | Confirm setting a custom fee              |
+| customFeeValue | Custom fee value in uSTX? (1,000,000 uSTX = 1 STX) | Set the custom fee in uSTX                |
+
+**Note:** both `contractAddress` and `contractName` are set as userConfig properties based on the `citycoin` selection
+
+### How it Works
+
+The AutoMiningClaimer will pull the winning blocks from the related CityCoins block explorer (thanks and s/o to @jamil!), then:
+
+- filter by the user's Stacks address
+- check each won block against the contract
+  _(using `can-claim-mining-reward`)_
+- build a list of up to 25 claim transactions
+- submit each of the claim transactions
+
+**Note:** The default fee is set to 0.1 STX, but can be changed to a custom value through the prompts or using the `defaultFee` constant.
+
+**Note:** this script queries the API heavily, and sometimes can fail due to a gateway timeout. If this happens, try running the script again or using a different API node.
