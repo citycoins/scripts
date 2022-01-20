@@ -17,6 +17,7 @@ import {
   getNonce,
   STACKS_NETWORK,
   cancelPrompt,
+  promptFeeStrategy,
 } from "./utils.js";
 import {
   uintCV,
@@ -203,27 +204,6 @@ async function promptMiningStrategy() {
   }
   // return miningStrategy object
   return miningStrategy;
-}
-
-/**
- * @async
- * @function promptFeeStrategy
- * @description Prompts the user for a custom fee multiplier
- * @returns {Object[]} An object that contains the value for the fee multiplier
- */
-async function promptFeeStrategy() {
-  const feeMultiplier = await prompts(
-    {
-      type: "number",
-      name: "value",
-      message: "Fee multiplier for tx in mempool? (default: 1)",
-      validate: (value) => (value > 0 ? true : "Value must be greater than 0"),
-    },
-    {
-      onCancel: cancelPrompt,
-    }
-  );
-  return feeMultiplier;
 }
 
 /**

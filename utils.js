@@ -1,4 +1,5 @@
 import chalk from "chalk";
+import prompts from "prompts";
 import { StacksMainnet } from "@stacks/network";
 import {
   callReadOnlyFunction,
@@ -650,4 +651,25 @@ export async function waitUntilBlock(userConfig) {
   } while (userConfig.targetBlockHeight > currentBlock);
 
   return true;
+}
+
+/**
+ * @async
+ * @function promptFeeStrategy
+ * @description Prompts the user for a custom fee multiplier
+ * @returns {Object[]} An object that contains the value for the fee multiplier
+ */
+export async function promptFeeStrategy() {
+  const feeMultiplier = await prompts(
+    {
+      type: "number",
+      name: "value",
+      message: "Fee multiplier for tx in mempool? (default: 1)",
+      validate: (value) => (value > 0 ? true : "Value must be greater than 0"),
+    },
+    {
+      onCancel: cancelPrompt,
+    }
+  );
+  return feeMultiplier;
 }
