@@ -1,3 +1,12 @@
+import {
+  broadcastTransaction,
+  createAssetInfo,
+  FungibleConditionCode,
+  makeContractCall,
+  makeStandardFungiblePostCondition,
+  PostConditionMode,
+  uintCV,
+} from "@stacks/transactions";
 import BN from "bn.js";
 import console from "console";
 import prompts from "prompts";
@@ -5,8 +14,16 @@ import {
   cancelPrompt,
   exitWithError,
   getCityCoinBalance,
+  getNonce,
+  getOptimalFee,
   printDivider,
+  printTimeStamp,
+  processTx,
+  promptFeeStrategy,
+  STACKS_NETWORK,
+  timer,
   title,
+  USTX,
   warn,
 } from "./utils.js";
 
@@ -50,13 +67,15 @@ async function promptUserConfig() {
           answers.contractAddress = "SP466FNC0P7JWTNM2R9T199QRZN1MYEDTAR0KP27";
           answers.contractName = "miamicoin-core-v1";
           answers.contractToken = "miamicoin-token";
-          answers.tokenSymbol = "MIA";
+          answers.contractTokenName = "miamicoin";
+          answers.contractTokenSymbol = "MIA";
           break;
         case "NYC":
           answers.contractAddress = "SP2H8PY27SEZ03MWRKS5XABZYQN17ETGQS3527SA5";
           answers.contractName = "newyorkcitycoin-core-v1";
           answers.contractToken = "newyorkcitycoin-token";
-          answers.tokenSymbol = "NYC";
+          answers.contractTokenName = "newyorkcitycoin";
+          answers.contractTokenSymbol = "NYC";
           break;
       }
     }
@@ -91,9 +110,13 @@ async function promptStackingStrategy(userConfig) {
       type: "number",
       name: "amountTokens",
       message: `Number of CityCoins to Stack? (balance: ${balance.toLocaleString()} ${
-        userConfig.tokenSymbol
+        userConfig.contractTokenSymbol
       })`,
-      validate: (value) => (value > 0 ? true : "Amount must be greater than 0"),
+      validate: (value) => {
+        if (value > balance) return "Value cannot be greater than balance";
+        if (value <= 0) return "Value must be greater than 0";
+        return true;
+      },
     },
     {
       type: "number",
@@ -116,6 +139,17 @@ async function promptStackingStrategy(userConfig) {
       message: "Custom fee value in uSTX? (1,000,000 uSTX = 1 STX)",
       validate: (value) => (value > 0 ? true : "Value must be greater than 0"),
     },
+    {
+      type: "confirm",
+      name: "customNonce",
+      message: "Set custom nonce?",
+    },
+    {
+      type: (prev) => (prev ? "number" : null),
+      name: "customNonceValue",
+      message: "Custom nonce value?",
+      validate: (value) => (value > 0 ? true : "Value must be greater than 0"),
+    },
   ];
   const stackingStrategy = await prompts(stackingStrategyQuestions, {
     onCancel: cancelPrompt,
@@ -126,7 +160,97 @@ async function promptStackingStrategy(userConfig) {
 
 async function autoStack(userConfig) {
   let targetFee = 0;
-  const stackingStrategy = await promptStackingStrategy(userConfig);
+  let targetNonce = 0;
+  let feeMultiplier = 0;
+  const stackingStrategy = await promptStackingStrategy(userConfig).catch(
+    (err) => exitWithError(`promptStackingStrategy err: ${err}`)
+  );
+
+  printDivider();
+  console.log(title("STATUS: BUILDING STACKING TX"));
+  printDivider();
+  printTimeStamp();
+
+  // set fee for tx
+  if (stackingStrategy.customFee) {
+    targetFee = stackingStrategy.customFeeValue;
+  } else {
+    feeMultiplier = await promptFeeStrategy().catch((err) =>
+      exitWithError(`promptFeeStrategy err: ${err}`)
+    );
+    targetFee = await getOptimalFee(feeMultiplier.value).catch((err) =>
+      exitWithError(`getOptimalFee err: ${err}`)
+    );
+  }
+
+  // set nonce for tx
+  if (stackingStrategy.customNonce) {
+    targetNonce = stackingStrategy.customNonceValue;
+  } else {
+    targetNonce = await getNonce(userConfig.stxAddress).catch((err) =>
+      exitWithError(`getNonce err: ${err}`)
+    );
+  }
+
+  // output address and summary info
+  console.log(
+    `account: ${userConfig.stxAddress.slice(
+      0,
+      5
+    )}...${userConfig.stxAddress.slice(userConfig.stxAddress.length - 5)}`
+  );
+  console.log(
+    `amount: ${stackingStrategy.amountTokens} ${userConfig.contractTokenSymbol}`
+  );
+  console.log(`cycles: ${stackingStrategy.lockPeriod}`);
+  console.log(`targetFee: ${(targetFee / USTX).toFixed(6)} STX`);
+  console.log(`targetNonce: ${targetNonce}`);
+
+  // create the Stacking tx
+  const assetInfo = createAssetInfo(
+    userConfig.contractAddress,
+    userConfig.contractToken,
+    userConfig.contractTokenName
+  );
+  const txOptions = {
+    contractAddress: userConfig.contractAddress,
+    contractName: userConfig.contractName,
+    functionName: "stack-tokens",
+    functionArgs: [
+      uintCV(stackingStrategy.amountTokens),
+      uintCV(stackingStrategy.lockPeriod),
+    ],
+    senderKey: userConfig.stxPrivateKey,
+    fee: new BN(targetFee),
+    nonce: new BN(targetNonce),
+    postConditionMode: PostConditionMode.Deny,
+    postConditions: [
+      makeStandardFungiblePostCondition(
+        userConfig.stxAddress,
+        FungibleConditionCode.Equal,
+        new BN(stackingStrategy.amountTokens),
+        assetInfo
+      ),
+    ],
+    network: STACKS_NETWORK,
+  };
+
+  // pause 10sec
+  console.log(`pausing 10sec before submit`);
+  await timer(10000);
+
+  // submit the tx
+  const transaction = await makeContractCall(txOptions).catch((err) =>
+    exitWithError(`makeContractCall err: ${err}`)
+  );
+  const result = await broadcastTransaction(transaction, STACKS_NETWORK).catch(
+    (err) => exitWithError(`broadcastTransaction err: ${err}`)
+  );
+
+  // monitor the tx status
+  await processTx(result, transaction.txid()).catch((err) =>
+    exitWithError(`processTx err: ${err}`)
+  );
 }
 
 // show title and disclaimer on first run
