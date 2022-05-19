@@ -139,12 +139,12 @@ async function getStackingInfo() {
         toReturn: parseInt(stacker.value.toReturn.value),
         stxReward: stackingReward,
       });
-      if (i > currentCycle) {
-        if (parseInt(stacker.value.amountStacked.value) === 0) {
-          console.log(`Stopping at cycle ${i + 1} due to 0 amount stacked`);
-          break;
-        }
-      }
+      //if (i > currentCycle) {
+      //  if (parseInt(stacker.value.amountStacked.value) === 0) {
+      //    console.log(`Stopping at cycle ${i + 1} due to 0 amount stacked`);
+      //    break;
+      //  }
+      // }
       i++;
     } while (i < currentCycle + maxCycles);
   } else {

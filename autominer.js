@@ -131,12 +131,12 @@ async function promptUserConfig() {
     if (prompt.name === "citycoin") {
       switch (answer) {
         case "MIA":
-          answers.contractAddress = "SP466FNC0P7JWTNM2R9T199QRZN1MYEDTAR0KP27";
-          answers.contractName = "miamicoin-core-v1";
+          answers.contractAddress = "SP1H1733V5MZ3SZ9XRW9FKYGEZT0JDGEB8Y634C7R";
+          answers.contractName = "miamicoin-core-v2";
           break;
         case "NYC":
-          answers.contractAddress = "SP2H8PY27SEZ03MWRKS5XABZYQN17ETGQS3527SA5";
-          answers.contractName = "newyorkcitycoin-core-v1";
+          answers.contractAddress = "SPSCWDV3RKV5ZRN1FQD84YE1NQFEDJ9R1F4DYQ11";
+          answers.contractName = "newyorkcitycoin-core-v2";
           break;
       }
     }

@@ -388,6 +388,28 @@ async function getMiningStatsAtBlock(
   return result.value.amount.value;
 }
 
+export async function getMiningStatsAtBlockV2(cityName, blockHeight) {
+  const url = `https://api.citycoins.co/mining/get-mining-stats-at-block/${cityName}/${blockHeight}`;
+  const response = await fetch(url);
+
+  const emptyObj = {
+    amount: 0,
+    amountToCity: 0,
+    amountToStackers: 0,
+    minersCount: 0,
+    rewardClaimed: false,
+  };
+
+  if (response.status === 200) {
+    const result = await response.json();
+    return result;
+  }
+  if (response.status === 404) {
+    return emptyObj;
+  }
+  exitWithError(`getMiningStatsAtBlockV2 err: ${response.status}`);
+}
+
 /**
  * @async
  * @function getStackerAtCycleOrDefault
