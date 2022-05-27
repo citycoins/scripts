@@ -1,0 +1,24 @@
+{
+  "name": "citycoins-scripts",
+  "version": "1.0.0",
+  "license": "GPLV3",
+  "description": "Scripts for CityCoins",
+  "dependencies": {
+    "cross-fetch": "^3.1.5",
+    "micro-stacks": "^0.5.0",
+    "node-fetch": "^2.6.6",
+    "prompts": "^2.4.2",
+    "throttled-queue": "^2.1.4"
+  },
+  "devDependencies": {
+    "@types/node-fetch": "^2.6.1",
+    "@types/prompts": "^2.0.14"
+  },
+  "eslintConfig": {
+    "root": true,
+    "extends": [
+      "typescript",
+      "prettier"
+    ]
+  }
+}
