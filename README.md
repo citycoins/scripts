@@ -1,26 +1,20 @@
 # CityCoins Scripts
 
-This directory provides a set of Node.js scripts and utilities to interact with the CityCoins protocol.
+> NOTE: This repository is being updated to use TypeScript, micro-stacks and the CityCoins API.
+> 
+> More information will be added/updated over time.
 
-All functions are documented using [JSDoc](https://jsdoc.app/about-getting-started.html), and the documentation lives on [GitHub Pages](https://citycoins.github.io/scripts).
-
-To learn more about a specific script, click on the link below.
-
-| Name                                                  | Description                                       |
-| ----------------------------------------------------- | ------------------------------------------------- |
-| [`autominer.js`](./info/autominer.md)                 | Utility for continously mining CityCoins          |
-| [`autominingclaimer.js`](./info/autominingclaimer.md) | Utility for claiming CityCoin mining rewards      |
-| [`getnetworkstatus.js`](./info/getnetworkstatus.md)   | Utility for getting the current network status    |
-| [`getstackinginfo.js`](./info/getstackinginfo.md)     | Get the current Stacking info for a given address |
-| [`gettxstatus.js`](./info/gettxstatus.md)             | Get the current status of a given transaction     |
+This directory provides TypeScript examples of how to interact with the Stacks blockchain and CityCoins protocol.
 
 All of the scripts use [prompts](https://github.com/terkelg/prompts) to gather the required information, and nothing is stored on disk.
 
-For scripts that use a private key, remember to **keep it safe** and **never share with anyone**. [This page has more information](./info/privatekey.md) on how to obtain your hex encoded private key for scripts that require it.
+For scripts that use a private key, remember to **keep it safe** and **never share with anyone**. [This page has more information](./privatekey.md) on how to obtain your hex encoded private key for scripts that require it.
 
 ## Requirements
 
 - [Node.js / NPM](https://nodejs.org/en/) (or [nvm](https://github.com/nvm-sh/nvm) for Mac/Linux)
+- [TypeScript](https://www.npmjs.com/package/typescript)
+- [ts-node](https://www.npmjs.com/package/ts-node)
 
 ## Installation
 
@@ -39,8 +33,8 @@ cd scripts
 npm install
 ```
 
-Any scripts listed in the table above can be run using the following command:
+Any scripts can be run using the following command:
 
 ```bash
-node scriptname.js
+tsc && ts-node src/scriptname.ts
 ```
