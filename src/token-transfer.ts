@@ -29,8 +29,7 @@ import {
 } from "micro-stacks/transactions";
 
 // set default fee to save time/prompts
-// const DEFAULT_FEE = 10000 // 0.01 STX, avg is 0.003 STX
-const DEFAULT_FEE = 500000; // 0.01 STX, avg is 0.003 STX
+const DEFAULT_FEE = 10000; // 0.01 STX, avg is 0.003 STX
 
 export async function promptUser() {
   // set submit action for prompts
