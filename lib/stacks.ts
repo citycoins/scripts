@@ -2,7 +2,6 @@ import { StacksMainnet } from "micro-stacks/network";
 import { debugLog, fetchJson } from "./utils";
 
 // stacks constants
-export const MICRO_UNITS = 1000000;
 export const STACKS_NETWORK = new StacksMainnet({
   coreApiUrl: "https://stacks-node-api.stacks.co",
 });
@@ -27,7 +26,7 @@ export async function getNonce(address: string): Promise<number> {
 
 // get the total number of transactions in the Stacks mempool
 export async function getTotalMempoolTx(): Promise<number> {
-  const url = `${STACKS_NETWORK.getCoreApiUrl()}/extended/v1/mempool`;
+  const url = `${STACKS_NETWORK.getCoreApiUrl()}/extended/v1/tx/mempool`;
   const mempoolResult = await fetchJson(url);
   const totalTx = +mempoolResult.total;
   return totalTx;

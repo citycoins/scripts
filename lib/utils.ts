@@ -7,13 +7,22 @@ const ENABLE_LOGS = false;
 export const debugLog = (msg: string) =>
   ENABLE_LOGS && console.log(`DEBUG: ${msg}`);
 
+// micro helpers
+export const MICRO_UNITS = 1000000;
+export const toMicro = (amount: number) => amount * MICRO_UNITS;
+export const fromMicro = (amount: number) => (amount / MICRO_UNITS).toFixed(6);
+
 // output helpers
 export const printDivider = () => console.log(`------------------------------`);
 export const printTimeStamp = () => {
-  let newDate = new Date().toLocaleDateString();
+  let newDate = new Date().toLocaleString();
   newDate = newDate.replace(/,/g, "");
   console.log(newDate);
 };
+export const printAddress = (address: string) =>
+  console.log(`address: ${address.slice(0, 5)}...${address.slice(-5)}`);
+export const printAmount = (amount: number, symbol: string) =>
+  console.log(`amount: ${amount.toFixed(6)} ${symbol}`);
 
 // catch user exiting the prompt interface
 export const cancelPrompt = (promptName: string) => {
@@ -81,27 +90,25 @@ export async function waitUntilBlock(
     }
     // print title and info
     printDivider();
-    console.log(`STATUS: WAITING FOR TARGET BLOCK ${block.toLocaleString()}`);
+    console.log(`STATUS: WAITING FOR TARGET BLOCK ${block}`);
     printDivider();
     printTimeStamp();
-    console.log(`account: ${address.slice(0, 5)}...${address.slice(-5)}`);
+    printAddress(address);
     // get current block
     currentBlock = await getStacksBlockHeight().catch((err) => exitError(err));
-    console.log(`currentBlock: ${currentBlock.toLocaleString()}`);
-    console.log(`targetBlock: ${block.toLocaleString()}`);
+    console.log(`currentBlock: ${currentBlock}`);
+    console.log(`targetBlock: ${block}`);
     // show distance and time
     if (currentBlock < block) {
-      console.log(
-        `distance: ${(block - currentBlock).toLocaleString()} blocks to go`
-      );
+      console.log(`distance: ${block - currentBlock} blocks left`);
       const remainingTime = ((block - currentBlock) * 10) / 60;
       remainingTime >= 1
-        ? console.log(`time: ${remainingTime.toFixed(2)} hours}`)
+        ? console.log(`time: ${remainingTime.toFixed(2)} hours`)
         : console.log(`time: ${(remainingTime * 60).toFixed()} minutes`);
     }
     // show mempool tx count
     const mempoolTx = await getTotalMempoolTx().catch((err) => exitError(err));
-    console.log(`mempoolTx: ${mempoolTx.toLocaleString()}`);
+    console.log(`mempoolTx: ${mempoolTx}`);
   } while (block > currentBlock);
 
   return true;
