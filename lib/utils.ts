@@ -3,6 +3,12 @@ import throttledQueue from "throttled-queue";
 import { getStacksBlockHeight, getTotalMempoolTx } from "./stacks";
 
 // debug settings for more verbose logging
+// TODO/IDEA: debugLog could accept a "level" integer
+// default to info if nothing specified
+// 1: errors ERROR:
+// 2: warnings WARN:
+// 3: info INFO:
+// Could also split into categories or file names.
 const ENABLE_LOGS = false;
 export const debugLog = (msg: string) =>
   ENABLE_LOGS && console.log(`DEBUG: ${msg}`);
@@ -90,7 +96,7 @@ export async function waitUntilBlock(
     }
     // print title and info
     printDivider();
-    console.log(`STATUS: WAITING FOR TARGET BLOCK ${block}`);
+    console.log(`WAITING FOR BLOCK ${block}`);
     printDivider();
     printTimeStamp();
     printAddress(address);
@@ -121,8 +127,12 @@ export function disclaimerIntro(
   requiresKey: boolean
 ): void {
   printDivider();
+  printDivider();
   console.log(`${title.toUpperCase()}`);
+  printDivider();
+  printDivider();
   console.log(description);
+  printDivider();
   printDivider();
   requiresKey &&
     console.log(
@@ -130,4 +140,5 @@ export function disclaimerIntro(
     );
   console.log("THE CODE IS FOR EDUCATIONAL AND DEMONSTRATION PURPOSES ONLY.\n");
   console.log("USE AT YOUR OWN RISK. PLEASE REPORT ANY ISSUES ON GITHUB.");
+  printDivider();
 }

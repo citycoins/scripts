@@ -1,5 +1,17 @@
 import { StacksMainnet } from "micro-stacks/network";
-import { debugLog, fetchJson } from "./utils";
+import {
+  StacksTransaction,
+  TxBroadcastResult,
+} from "micro-stacks/transactions";
+import {
+  debugLog,
+  exitError,
+  fetchJson,
+  fromMicro,
+  printDivider,
+  printTimeStamp,
+  sleep,
+} from "./utils";
 
 // stacks constants
 export const STACKS_NETWORK = new StacksMainnet({
@@ -30,4 +42,101 @@ export async function getTotalMempoolTx(): Promise<number> {
   const mempoolResult = await fetchJson(url);
   const totalTx = +mempoolResult.total;
   return totalTx;
+}
+
+// get account balances for a given address
+export async function getStacksBalances(address: string): Promise<any> {
+  const url = `${STACKS_NETWORK.getCoreApiUrl()}/extended/v1/address/${address}/balances`;
+  const balanceResult = await fetchJson(url);
+  return balanceResult;
+}
+
+// get optimal fee for transactions
+// based on average of current fees in mempool
+export async function getOptimalFee(multiplier: number, checkAllTx = false) {
+  let counter = 0;
+  let total = 0;
+  let limit = 200;
+  let url = "";
+  let txResults: any = [];
+
+  // query the stacks-node for multiple transactions
+  do {
+    url = `${STACKS_NETWORK.getCoreApiUrl()}/extended/v1/tx/mempool?limit=${limit}&offset=${counter}&unanchored=true`;
+    const result = await fetchJson(url);
+    // get total number of tx
+    total = checkAllTx ? result.total : result.results.length;
+    // add all transactions to main array
+    result.results.map((tx: any) => {
+      txResults.push(tx);
+      counter++;
+    });
+    // output counter
+    checkAllTx && console.log(`Processed ${counter} of ${total}`);
+  } while (counter < total);
+
+  const max = txResults
+    .map((fee: any) => +fee.fee_rate)
+    .reduce((a: number, b: number) => {
+      return a > b ? a : b;
+    });
+  console.log(`maxFee: ${fromMicro(max)} STX`);
+  const sum = txResults
+    .map((fee: any) => +fee.fee_rate)
+    .reduce((a: number, b: number) => a + b, 0);
+  const avg = sum / txResults.length;
+  console.log(`avgFee: ${fromMicro(avg)} STX`);
+
+  return avg * multiplier;
+}
+
+// monitor a transaction in pending status
+// until confirmed or rejected
+export async function monitorTx(
+  broadcastedResult: TxBroadcastResult,
+  txId: string
+) {
+  let count = 0;
+  const countLimit = 50;
+  const url = `${STACKS_NETWORK.coreApiUrl}/extended/v1/tx/${txId}`;
+
+  do {
+    const txResult = await fetchJson(url);
+
+    printDivider();
+    console.log(
+      `TX STATUS: ${
+        txResult.hasOwnProperty("tx_status")
+          ? txResult.tx_status.toUpperCase()
+          : "PENDING"
+      }`
+    );
+    printDivider();
+    printTimeStamp();
+    console.log(`https://explorer.stacks.co/txid/${txResult.tx_id}`);
+    console.log(`attempt ${count + 1} of ${countLimit}`);
+
+    if ("error" in broadcastedResult) {
+      console.log(`error: ${broadcastedResult.reason}`);
+      console.log(`details:\n${JSON.stringify(broadcastedResult.reason_data)}`);
+      return 0;
+    } else {
+      if (txResult.tx_status === "success") {
+        return txResult.block_height;
+      }
+      if (txResult.tx_status === "abort_by_post_condition") {
+        exitError(
+          `tx failed, exiting...\ntxid: ${txResult.tx_id}\nhttps://explorer.stacks.co/txid/${txResult.tx_id}`
+        );
+      }
+    }
+    // pause for 30min before checking again
+    await sleep(300000);
+    count++;
+  } while (count < countLimit);
+
+  console.log(`reached retry limit, manually check tx`);
+  exitError(
+    "Unable to find target block height for next transaction, exiting..."
+  );
 }

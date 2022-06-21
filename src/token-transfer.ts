@@ -7,8 +7,9 @@ import {
   exitError,
   exitSuccess,
   printDivider,
+  MICRO_UNITS,
 } from "../lib/utils";
-import { getNonce, MICRO_UNITS, STACKS_NETWORK } from "../lib/stacks";
+import { getNonce, STACKS_NETWORK } from "../lib/stacks";
 import { getCCBalance } from "../lib/citycoins";
 import {
   bufferCVFromString,
