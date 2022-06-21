@@ -1,7 +1,7 @@
 # CityCoins Scripts
 
 > NOTE: This repository is being updated to use TypeScript, micro-stacks and the CityCoins API.
-> 
+>
 > More information will be added/updated over time.
 
 This directory provides TypeScript examples of how to interact with the Stacks blockchain and CityCoins protocol.
@@ -14,7 +14,6 @@ For scripts that use a private key, remember to **keep it safe** and **never sha
 
 - [Node.js / NPM](https://nodejs.org/en/) (or [nvm](https://github.com/nvm-sh/nvm) for Mac/Linux)
 - [TypeScript](https://www.npmjs.com/package/typescript)
-- [ts-node](https://www.npmjs.com/package/ts-node)
 
 ## Installation
 
@@ -26,7 +25,7 @@ OR
 git clone https://github.com/citycoins/scripts.git
 ```
 
-Enter the directory for the scripts and install the prequisites:
+Enter the directory for the scripts and install the prerequisites:
 
 ```bash
 cd scripts
@@ -36,5 +35,5 @@ npm install
 Any scripts can be run using the following command:
 
 ```bash
-tsc && ts-node src/scriptname.ts
+npx ts-node src/scriptname.ts
 ```
