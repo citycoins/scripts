@@ -75,19 +75,28 @@ export async function getOptimalFee(multiplier: number, checkAllTx = false) {
     checkAllTx && console.log(`Processed ${counter} of ${total}`);
   } while (counter < total);
 
-  const max = txResults
-    .map((fee: any) => +fee.fee_rate)
-    .reduce((a: number, b: number) => {
-      return a > b ? a : b;
-    });
+  const fees = txResults.map((fee: any) => +fee.fee_rate);
+
+  const max = fees.reduce((a: number, b: number) => {
+    return a > b ? a : b;
+  });
   console.log(`maxFee: ${fromMicro(max)} STX`);
-  const sum = txResults
-    .map((fee: any) => +fee.fee_rate)
-    .reduce((a: number, b: number) => a + b, 0);
+
+  const sum = fees.reduce((a: number, b: number) => a + b, 0);
   const avg = sum / txResults.length;
   console.log(`avgFee: ${fromMicro(avg)} STX`);
 
-  return avg * multiplier;
+  const mid = Math.floor(fees.length / 2);
+  const sorted = fees.sort((a: number, b: number) => a - b);
+  const median: number =
+    fees.length % 2 !== 0 ? sorted[mid] : (sorted[mid - 1] + sorted[mid]) / 2;
+  console.log(`median: ${fromMicro(median)} STX`);
+
+  const optimalFee = (avg + median) / 2;
+  console.log(`optimalFee: ${fromMicro(optimalFee)} STX`);
+  console.log(`multiplier: ${multiplier}`);
+
+  return optimalFee * multiplier;
 }
 
 // monitor a transaction in pending status

@@ -470,6 +470,7 @@ async function main() {
   const config = await setUserConfig();
   const strategy = await setStrategy(config);
   await mineMany(config, strategy);
+  printDivider();
   exitSuccess("all actions complete, script exiting...");
 }
 
