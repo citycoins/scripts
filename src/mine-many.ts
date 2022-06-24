@@ -269,18 +269,22 @@ async function setStrategy(config: any) {
     // verify max commit set by user or exit
     const confirmMax = await prompts(
       {
-        type: "confirm",
-        name: "confirmMax",
+        type: "toggle",
+        name: "value",
         message: `Confirm max commit per block: ${fromMicro(
           commitStrategy.maxCommitBlock
         )} STX?`,
+        initial: false,
+        active: "Yes",
+        inactive: "No",
       },
       {
         onCancel: (prompt: any) => cancelPrompt(prompt.name),
       }
     );
     printDivider();
-    if (!confirmMax) exitError("ERROR: max commit not confirmed, exiting...");
+    if (!confirmMax.value)
+      exitError("ERROR: max commit not confirmed, exiting...");
     // set commit value based on strategy
     commitAmount = await getBlockCommit(config, commitStrategy);
     // check that commit doesn't exceed max commit
@@ -310,9 +314,6 @@ async function setStrategy(config: any) {
     `commitTotal: ${fromMicro(commitAmount * config.numberOfBlocks)}`
   );
   console.log(`feeAmount: ${fromMicro(feeAmount)} STX`);
-  console.log(
-    `total: ${fromMicro(commitAmount * config.numberOfBlocks + feeAmount)} STX`
-  );
 
   const strategy = {
     commitAmount: commitAmount,
@@ -335,7 +336,9 @@ async function getBlockCommit(userConfig: any, commitStrategy: any) {
     commitStrategy
   );
   console.log(`avgPast: ${fromMicro(avgPast)} STX`);
-  const commitPast = avgPast * (commitStrategy.targetPercentage / 100);
+  const commitPast = Math.round(
+    avgPast * (commitStrategy.targetPercentage / 100)
+  );
   // get future average commit for selected distance
   const avgFuture = await getBlockCommitAvg(
     1,
@@ -344,8 +347,10 @@ async function getBlockCommit(userConfig: any, commitStrategy: any) {
     commitStrategy
   );
   console.log(`avgFuture: ${fromMicro(avgFuture)} STX`);
-  const commitFuture = avgFuture * (commitStrategy.targetPercentage / 100);
-  const commitAmount = (commitPast + commitFuture) / 2;
+  const commitFuture = Math.round(
+    avgFuture * (commitStrategy.targetPercentage / 100)
+  );
+  const commitAmount = Math.round((commitPast + commitFuture) / 2);
   return commitAmount;
 }
 
@@ -381,7 +386,7 @@ async function getBlockCommitAvg(
   return avg;
 }
 
-async function mineMany(config: any, strategy: any) {
+async function mineMany(config: any, strategy: any): Promise<any> {
   // get nonce
   const nonce = await getNonce(config.stxSender);
   console.log(`nonce: ${nonce}`);
@@ -397,7 +402,7 @@ async function mineMany(config: any, strategy: any) {
     // create the clarity values
     const mineManyArray: UIntCV[] = [];
     for (let i = 0; i < config.numberOfBlocks; i++) {
-      mineManyArray.push(uintCV(+strategy.commitAmount));
+      mineManyArray.push(uintCV(parseInt(strategy.commitAmount)));
     }
     const mineManyArrayCV = listCV(mineManyArray);
     // print tx info
@@ -407,9 +412,6 @@ async function mineMany(config: any, strategy: any) {
     console.log(`numberOfBlocks: ${config.numberOfBlocks}`);
     console.log(`commitTotal: ${fromMicro(strategy.commitTotal)} STX`);
     console.log(`feeAmount: ${fromMicro(strategy.feeAmount)} STX`);
-    console.log(
-      `total: ${fromMicro(strategy.commitTotal + strategy.feeAmount)} STX`
-    );
     // create the mining tx
     const txOptions = {
       contractAddress: config.contractAddress,
@@ -417,22 +419,22 @@ async function mineMany(config: any, strategy: any) {
       functionName: "mine-many",
       functionArgs: [mineManyArrayCV],
       senderKey: config.stxPrivateKey,
-      fee: strategy.feeAmount,
+      fee: parseInt(strategy.feeAmount),
       nonce: nonce,
       postConditionMode: PostConditionMode.Deny,
       postConditions: [
         makeStandardSTXPostCondition(
           config.stxSender,
           FungibleConditionCode.Equal,
-          strategy.commitTotal
+          parseInt(strategy.commitTotal)
         ),
       ],
       network: STACKS_NETWORK,
       anchorMode: AnchorMode.Any,
     };
     // pause 10sec
-    console.log("pausing 10sec before submit...");
-    await sleep(10000);
+    console.log("pausing 15sec before submit...");
+    await sleep(15000);
     // submit tx
     try {
       const transaction = await makeContractCall(txOptions);
@@ -440,6 +442,8 @@ async function mineMany(config: any, strategy: any) {
         transaction,
         STACKS_NETWORK
       );
+      console.log("pausing 15sec after submit...");
+      await sleep(15000);
       const nextTarget = await monitorTx(broadcastResult, transaction.txid());
       if (config.continuousMining || config.numberOfRuns > 0) {
         config.numberOfRuns -= 1;
@@ -453,7 +457,7 @@ async function mineMany(config: any, strategy: any) {
             config.continousMining ? "until balance spent" : config.numberOfRuns
           }`
         );
-        mineMany(config, strategy);
+        return await mineMany(config, strategy);
       }
     } catch (err) {
       exitError(String(err));
