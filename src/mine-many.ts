@@ -387,9 +387,6 @@ async function getBlockCommitAvg(
 }
 
 async function mineMany(config: any, strategy: any): Promise<any> {
-  // get nonce
-  const nonce = await getNonce(config.stxSender);
-  console.log(`nonce: ${nonce}`);
   // loop until target block is reached
   const startMiner = await waitUntilBlock(
     config.targetBlockHeight,
@@ -405,6 +402,8 @@ async function mineMany(config: any, strategy: any): Promise<any> {
       mineManyArray.push(uintCV(parseInt(strategy.commitAmount)));
     }
     const mineManyArrayCV = listCV(mineManyArray);
+    // get nonce
+    const nonce = await getNonce(config.stxSender);
     // print tx info
     printAddress(config.stxSender);
     console.log(`nonce: ${nonce}`);
