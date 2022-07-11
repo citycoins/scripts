@@ -93,8 +93,8 @@ export async function getOptimalFee(multiplier: number, checkAllTx = false) {
   console.log(`median: ${fromMicro(median)} STX`);
 
   const optimalFee = (avg + median) / 2;
-  console.log(`optimalFee: ${fromMicro(optimalFee)} STX`);
   console.log(`multiplier: ${multiplier}`);
+  console.log(`optimalFee: ${fromMicro(optimalFee)} STX`);
 
   return optimalFee * multiplier;
 }
