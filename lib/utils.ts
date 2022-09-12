@@ -49,8 +49,8 @@ export const exitError = (msg: string) => {
 export const sleep = (ms: number) =>
   new Promise((resolve) => setTimeout(resolve, ms));
 
-// throttle to 4 requests per second
-const throttle = throttledQueue(4, 1000, true);
+// throttle to 1 requests per second
+const throttle = throttledQueue(1, 1000, true);
 
 // fetch and return JSON from URL
 export const fetchJson = async (url: string): Promise<any> => {
