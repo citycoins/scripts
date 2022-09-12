@@ -1,26 +1,17 @@
 # CityCoins Scripts
 
-This directory provides a set of Node.js scripts and utilities to interact with the CityCoins protocol.
-
-All functions are documented using [JSDoc](https://jsdoc.app/about-getting-started.html), and the documentation lives on [GitHub Pages](https://citycoins.github.io/scripts).
-
-To learn more about a specific script, click on the link below.
-
-| Name                                                  | Description                                       |
-| ----------------------------------------------------- | ------------------------------------------------- |
-| [`autominer.js`](./info/autominer.md)                 | Utility for continously mining CityCoins          |
-| [`autominingclaimer.js`](./info/autominingclaimer.md) | Utility for claiming CityCoin mining rewards      |
-| [`getnetworkstatus.js`](./info/getnetworkstatus.md)   | Utility for getting the current network status    |
-| [`getstackinginfo.js`](./info/getstackinginfo.md)     | Get the current Stacking info for a given address |
-| [`gettxstatus.js`](./info/gettxstatus.md)             | Get the current status of a given transaction     |
+This directory provides TypeScript examples of how to interact with the [Stacks blockchain](https://stacks.co) and [CityCoins protocol](https://citycoins.co).
 
 All of the scripts use [prompts](https://github.com/terkelg/prompts) to gather the required information, and nothing is stored on disk.
 
-For scripts that use a private key, remember to **keep it safe** and **never share with anyone**. [This page has more information](./info/privatekey.md) on how to obtain your hex encoded private key for scripts that require it.
+For scripts that use a private key, remember to **keep it safe** and **never share with anyone**.
+
+[This page has more information](./privatekey.md) on how to obtain your hex encoded private key for scripts that require it.
 
 ## Requirements
 
 - [Node.js / NPM](https://nodejs.org/en/) (or [nvm](https://github.com/nvm-sh/nvm) for Mac/Linux)
+- [TypeScript](https://www.npmjs.com/package/typescript)
 
 ## Installation
 
@@ -32,15 +23,35 @@ OR
 git clone https://github.com/citycoins/scripts.git
 ```
 
-Enter the directory for the scripts and install the prequisites:
+Enter the directory for the scripts and install the prerequisites:
 
 ```bash
 cd scripts
 npm install
 ```
 
-Any scripts listed in the table above can be run using the following command:
+## Usage
+
+Any scripts can be run using the following command from the scripts directory:
 
 ```bash
-node scriptname.js
+npx ts-node src/scriptname.ts
 ```
+
+## Supported Scripts
+
+| Name                     | Description                                                                                                      |
+| ------------------------ | ---------------------------------------------------------------------------------------------------------------- |
+| claim-mining-reward.ts   | Claim mining rewards for a given address, can search multiple blocks.                                            |
+| claim-stacking-reward.ts | Claim stacking rewards for a given address, can search multiple cycles.                                          |
+| convert-to-v2.ts         | Convert V1 CityCoins to V2, [see here](https://www.citycoins.co/post/protocol-upgrade-faq) for more information. |
+| get-network-status.ts    | Shows transaction statistics by reading the Stacks mempool.                                                      |
+| mine-many.ts             | CityCoins miner script, can mine multiple blocks and set custom strategies.                                      |
+| tardis.ts                | Obtain historical CityCoin data using on-chain CityCoin Tardis contracts.                                        |
+| token-transfer.ts        | Step-by-step transfer tool to send CityCoins to another address.                                                 |
+
+## Screenshots / Examples
+
+![Get Network Status Example](./cc-get-network-status.png)
+
+![Tardis Example](./cc-tardis.png)
