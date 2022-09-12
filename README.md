@@ -1,14 +1,12 @@
 # CityCoins Scripts
 
-> NOTE: This repository is being updated to use TypeScript, micro-stacks and the CityCoins API.
->
-> More information will be added/updated over time.
-
-This directory provides TypeScript examples of how to interact with the Stacks blockchain and CityCoins protocol.
+This directory provides TypeScript examples of how to interact with the [Stacks blockchain](https://stacks.co) and [CityCoins protocol](https://citycoins.co).
 
 All of the scripts use [prompts](https://github.com/terkelg/prompts) to gather the required information, and nothing is stored on disk.
 
-For scripts that use a private key, remember to **keep it safe** and **never share with anyone**. [This page has more information](./privatekey.md) on how to obtain your hex encoded private key for scripts that require it.
+For scripts that use a private key, remember to **keep it safe** and **never share with anyone**.
+
+[This page has more information](./privatekey.md) on how to obtain your hex encoded private key for scripts that require it.
 
 ## Requirements
 
