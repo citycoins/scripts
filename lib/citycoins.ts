@@ -54,6 +54,15 @@ export interface TokenContract {
   uri: string;
 }
 
+export interface UserIds {
+  [key: string]: number;
+}
+
+export interface StackerAtCycle {
+  amountStacked: number;
+  toReturn: number;
+}
+
 // MIAMICOIN
 
 const miaInfo: CityInfo = {
@@ -285,7 +294,7 @@ export const CITY_CONFIG = {
   },
 };
 
-async function getCityInfo(city: string): Promise<CityInfo> {
+export async function getCityInfo(city: string): Promise<CityInfo> {
   switch (city) {
     case "mia":
       return miaInfo;
@@ -353,4 +362,47 @@ export async function canClaimMiningReward(
   const url = `${CC_API_BASE}/${version}/${city}/mining-claims/can-claim-mining-reward/${block}/${address}`;
   const result = await fetchJson(url);
   return result.value;
+}
+
+export async function getRewardCycle(
+  version: string,
+  city: string,
+  block: number
+): Promise<number> {
+  const url = `${CC_API_BASE}/${version}/${city}/stacking/get-reward-cycle/${block}`;
+  const result = await fetchJson(url);
+  return result.value;
+}
+
+export async function getUserId(
+  version: string,
+  city: string,
+  address: string
+): Promise<number> {
+  const url = `${CC_API_BASE}/${version}/${city}/activation/get-user-id/${address}`;
+  const result = await fetchJson(url);
+  return result.value;
+}
+
+export async function getStackingReward(
+  version: string,
+  city: string,
+  userId: number,
+  targetCycle: number
+): Promise<number> {
+  const url = `${CC_API_BASE}/${version}/${city}/stacking-claims/get-stacking-reward/${userId}/${targetCycle}`;
+  const result = await fetchJson(url);
+  return result.value;
+}
+
+export async function getStackerAtCycle(
+  version: string,
+  city: string,
+  userId: number,
+  targetCycle: number,
+  orDefault = true
+): Promise<StackerAtCycle> {
+  const url = `${CC_API_BASE}/${version}/${city}/stacking/get-stacker-at-cycle/${userId}/${targetCycle}/${orDefault}`;
+  const result = await fetchJson(url);
+  return result;
 }
