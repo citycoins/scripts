@@ -19,6 +19,8 @@ const jobParameters = [
   "amountDefault",
 ];
 
+const jobId = 2;
+
 async function run() {
   printDivider();
   printDivider();
@@ -54,7 +56,7 @@ async function run() {
       contractAddress: miaAuth.split(".")[0],
       contractName: miaAuth.split(".")[1],
       functionName: "get-uint-value-by-name",
-      functionArgs: [uintCV(1), stringAsciiCV(param)],
+      functionArgs: [uintCV(jobId), stringAsciiCV(param)],
       network: STACKS_NETWORK,
       senderAddress: miaAuth.split(".")[0],
     };
@@ -68,7 +70,7 @@ async function run() {
     contractAddress: miaAuth.split(".")[0],
     contractName: miaAuth.split(".")[1],
     functionName: "get-job",
-    functionArgs: [uintCV(1)],
+    functionArgs: [uintCV(jobId)],
     network: STACKS_NETWORK,
     senderAddress: miaAuth.split(".")[0],
   };
@@ -99,7 +101,7 @@ async function run() {
       contractAddress: nycAuth.split(".")[0],
       contractName: nycAuth.split(".")[1],
       functionName: "get-uint-value-by-name",
-      functionArgs: [uintCV(1), stringAsciiCV(param)],
+      functionArgs: [uintCV(jobId), stringAsciiCV(param)],
       network: STACKS_NETWORK,
       senderAddress: nycAuth.split(".")[0],
     };
@@ -113,7 +115,7 @@ async function run() {
     contractAddress: nycAuth.split(".")[0],
     contractName: nycAuth.split(".")[1],
     functionName: "get-job",
-    functionArgs: [uintCV(1)],
+    functionArgs: [uintCV(jobId)],
     network: STACKS_NETWORK,
     senderAddress: nycAuth.split(".")[0],
   };
