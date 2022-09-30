@@ -105,3 +105,7 @@ dist
 
 # TS build
 build
+
+# Data directory used for generated info from
+# the Stacks API
+data
