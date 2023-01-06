@@ -1,4 +1,4 @@
-import { noneCV, stringUtf8CV } from "micro-stacks/clarity";
+import { addressToString, noneCV, stringUtf8CV } from "micro-stacks/clarity";
 import { validateStacksAddress } from "micro-stacks/crypto";
 import {
   AnchorMode,
@@ -8,7 +8,12 @@ import {
 } from "micro-stacks/transactions";
 import prompts from "prompts";
 import { getFullCityConfig, selectCityVersion } from "../lib/citycoins";
-import { getNonce, getStacksBlockHeight, STACKS_NETWORK } from "../lib/stacks";
+import {
+  deriveChildAccount,
+  getNonce,
+  getStacksBlockHeight,
+  STACKS_NETWORK,
+} from "../lib/stacks";
 import {
   cancelPrompt,
   disclaimerIntro,
@@ -45,6 +50,13 @@ async function setUserConfig() {
           validateStacksAddress(value)
             ? true
             : "Valid Stacks address is required",
+      },
+      {
+        type: "password",
+        name: "stxMnemonic",
+        message: "Seed phrase for Stacks address?",
+        validate: (value: string) =>
+          value === "" ? "Stacks seed phrase is required" : true,
       },
       {
         type: "password",
@@ -116,6 +128,8 @@ async function registerUser(config: any) {
     network: STACKS_NETWORK,
     anchorMode: AnchorMode.Any,
   };
+  const privKey = await deriveChildAccount(config.stxMnemonic, 1); // target 2nd account
+  /*
   try {
     // create contract call and broadcast
     const transaction = await makeContractCall(txOptions);
@@ -134,6 +148,7 @@ async function registerUser(config: any) {
   } catch (err) {
     exitError(String(err));
   }
+  */
 }
 
 async function main() {

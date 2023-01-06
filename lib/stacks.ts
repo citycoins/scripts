@@ -1,5 +1,15 @@
+import * as bip39 from "bip39";
+import BIP32Factory from "bip32";
+import ECPairFactory from "ecpair";
+import * as bitcoin from "bitcoinjs-lib";
+import * as ecc from "tiny-secp256k1";
 import { StacksMainnet, StacksTestnet } from "micro-stacks/network";
-import { TxBroadcastResult } from "micro-stacks/transactions";
+import {
+  addressFromPublicKeys,
+  AddressHashMode,
+  publicKeyFromBuffer,
+  TxBroadcastResult,
+} from "micro-stacks/transactions";
 import {
   debugLog,
   exitError,
@@ -9,15 +19,28 @@ import {
   printTimeStamp,
   sleep,
 } from "./utils";
+import { StacksNetworkVersion } from "micro-stacks/crypto";
+import { bytesToHex } from "micro-stacks/common";
+import { addressToString } from "micro-stacks/clarity";
+
+// mainnet toggle, otherwise testnet
+const mainnet = false;
+
+// bitcoin constants
+const ECPair = ECPairFactory(ecc);
+const bip32 = BIP32Factory(ecc);
+const BITCOIN_TESTNET = bitcoin.networks.testnet;
+const BITCOIN_MAINNET = bitcoin.networks.bitcoin;
+export const BITCOIN_NETWORK = mainnet ? BITCOIN_MAINNET : BITCOIN_TESTNET;
 
 // stacks constants
-export const STACKS_MAINNET = new StacksMainnet({
+const STACKS_MAINNET = new StacksMainnet({
   coreApiUrl: "https://stacks-node-api.mainnet.stacks.co",
 });
-export const STACKS_TESTNET = new StacksTestnet({
+const STACKS_TESTNET = new StacksTestnet({
   coreApiUrl: "https://stacks-node-api.testnet.stacks.co",
 });
-export const STACKS_NETWORK = STACKS_TESTNET;
+export const STACKS_NETWORK = mainnet ? STACKS_MAINNET : STACKS_TESTNET;
 
 // get current Stacks block height
 export async function getStacksBlockHeight(): Promise<number> {
@@ -149,4 +172,33 @@ export async function monitorTx(
   exitError(
     "Unable to find target block height for next transaction, exiting..."
   );
+}
+
+export async function deriveChildAccount(mnemonic: string, index: number) {
+  const seed = await bip39.mnemonicToSeed(mnemonic);
+  if (!seed) exitError("Unable to derive seed from mnemonic");
+  const master = bip32.fromSeed(seed);
+  const child = master.derivePath(`m/44'/5757'/0'/0/${index}`);
+  const ecPair = ECPair.fromPrivateKey(child.privateKey!);
+  const childPrivateKeyHex = bytesToHex(ecPair.privateKey!);
+  const stxAddress = addressFromPublicKeys(
+    mainnet
+      ? StacksNetworkVersion.mainnetP2PKH
+      : StacksNetworkVersion.testnetP2PKH,
+    AddressHashMode.SerializeP2PKH,
+    1,
+    [publicKeyFromBuffer(ecPair.publicKey)]
+  );
+
+  const { address: btcAddress } = bitcoin.payments.p2pkh({
+    pubkey: ecPair.publicKey,
+    network: bitcoin.networks.testnet,
+  });
+
+  printDivider();
+  console.log(`stxAddress: ${addressToString(stxAddress)}`);
+  console.log(`privateKey: ${childPrivateKeyHex}`);
+  console.log(`btcAddress: ${btcAddress}`);
+
+  return childPrivateKeyHex;
 }
