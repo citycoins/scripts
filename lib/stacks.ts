@@ -9,6 +9,7 @@ import {
   AddressHashMode,
   createStacksPrivateKey,
   getPublicKeyFromStacksPrivateKey,
+  pubKeyfromPrivKey,
   publicKeyFromBuffer,
   publicKeyToString,
   TxBroadcastResult,
@@ -25,6 +26,7 @@ import {
 import { StacksNetworkVersion } from "micro-stacks/crypto";
 import { bytesToHex } from "micro-stacks/common";
 import { addressToString } from "micro-stacks/clarity";
+import { getPublicKey } from "@noble/secp256k1";
 
 // mainnet toggle, otherwise testnet
 export const MAINNET = false;
@@ -186,52 +188,67 @@ export async function deriveChildAccount(mnemonic: string, index: number) {
   const child = master.derivePath(`m/44'/5757'/0'/0/${index}`);
   const ecPair = ECPair.fromPrivateKey(child.privateKey!);
   const childPrivateKeyHex = bytesToHex(ecPair.privateKey!);
-  console.log(
-    `child.privateKey (${typeof child.privateKey}): ${bytesToHex(
-      child.privateKey!
-    )}`
-  );
-  console.log(
-    `ecPairPrivateKey (${typeof ecPair.privateKey}): ${bytesToHex(
-      ecPair.privateKey!
-    )}`
-  );
-  console.log(
-    `ecPairPublicKey (${typeof ecPair.publicKey}): ${bytesToHex(
-      ecPair.publicKey!
-    )}`
-  );
-  console.log(
-    `childPrivateKeyHex (${typeof childPrivateKeyHex}): ${childPrivateKeyHex}`
-  );
-
   const stxPrivateKey = createStacksPrivateKey(childPrivateKeyHex);
   const stxPublicKey = getPublicKeyFromStacksPrivateKey(stxPrivateKey);
+  const directPublicKey = pubKeyfromPrivKey(child.privateKey!);
+  const directPublicKey2 = pubKeyfromPrivKey(childPrivateKeyHex);
+  const noblePublicKeyUncompressed = getPublicKey(child.privateKey!, false);
+  const noblePublicKeyCompressed = getPublicKey(child.privateKey!, true); // isCompressed = true yields same public key as ecPair
+
+  // check private keys
+  console.log(`child.privateKey: ${bytesToHex(child.privateKey!)}`);
+  console.log(`ecPairPrivateKey: ${bytesToHex(ecPair.privateKey!)}`);
+  console.log(`childPrivateKeyHex: ${childPrivateKeyHex}`);
   console.log(
     `stxPrivateKey: ${bytesToHex(stxPrivateKey.data)} ${
       stxPrivateKey.compressed && " (compressed)"
     }`
   );
-  console.log(`stxPublicKey: ${publicKeyToString(stxPublicKey)}`);
-
-  const derivedStxAddress = addressFromPublicKeys(
-    MAINNET
-      ? StacksNetworkVersion.mainnetP2PKH
-      : StacksNetworkVersion.testnetP2PKH,
-    AddressHashMode.SerializeP2PKH,
-    1,
-    [publicKeyFromBuffer(stxPublicKey.data)]
+  console.log(
+    `stxSlicedPrivateKey: ${bytesToHex(stxPrivateKey.data.slice(0, 32))}`
   );
-  console.log("address from public key: ");
-  console.log(addressToString(derivedStxAddress));
 
-  const stxAddress = addressFromPublicKeys(
-    MAINNET
-      ? StacksNetworkVersion.mainnetP2PKH
-      : StacksNetworkVersion.testnetP2PKH,
-    AddressHashMode.SerializeP2PKH,
-    1,
-    [publicKeyFromBuffer(ecPair.publicKey)]
+  // check public keys
+  console.log(`ecPairPublicKey: ${bytesToHex(ecPair.publicKey!)}`);
+  console.log(`stxPublicKey: ${bytesToHex(stxPublicKey.data)}`);
+  console.log(`directPublicKey: ${bytesToHex(directPublicKey.data)}`);
+  console.log(`directPublicKey2: ${bytesToHex(directPublicKey2.data)}`);
+  console.log(
+    `noblePublicKeyUncompressed: ${bytesToHex(noblePublicKeyUncompressed)}`
+  );
+  console.log(
+    `noblePublicKeyCompressed: ${bytesToHex(noblePublicKeyCompressed)}`
+  );
+
+  const ecPairStxAddress = addressFromPubKey(ecPair.publicKey);
+  const stxPublicKeyAddress = addressFromPubKey(stxPublicKey.data);
+  const directPublicKeyAddress = addressFromPubKey(directPublicKey.data);
+  const directPublicKey2Address = addressFromPubKey(directPublicKey2.data);
+  const noblePublicKeyUncompressedAddress = addressFromPubKey(
+    noblePublicKeyUncompressed
+  );
+  const noblePublicKeyCompressedAddress = addressFromPubKey(
+    noblePublicKeyCompressed
+  );
+
+  // check addresses
+  console.log(`ecPairStxAddress: ${addressToString(ecPairStxAddress)}`);
+  console.log(`stxPublicKeyAddress: ${addressToString(stxPublicKeyAddress)}`);
+  console.log(
+    `directPublicKeyAddress: ${addressToString(directPublicKeyAddress)}`
+  );
+  console.log(
+    `directPublicKey2Address: ${addressToString(directPublicKey2Address)}`
+  );
+  console.log(
+    `noblePublicKeyUncompressedAddress: ${addressToString(
+      noblePublicKeyUncompressedAddress
+    )}`
+  );
+  console.log(
+    `noblePublicKeyCompressedAddress: ${addressToString(
+      noblePublicKeyCompressedAddress
+    )}`
   );
 
   const { address: btcAddress } = bitcoin.payments.p2pkh({
@@ -240,9 +257,21 @@ export async function deriveChildAccount(mnemonic: string, index: number) {
   });
 
   printDivider();
+  const stxAddress = noblePublicKeyCompressedAddress;
   console.log(`stxAddress: ${addressToString(stxAddress)}`);
   console.log(`privateKey: ${childPrivateKeyHex}`);
   console.log(`btcAddress: ${btcAddress}`);
 
-  return childPrivateKeyHex;
+  return { address: addressToString(stxAddress), key: childPrivateKeyHex };
+}
+
+function addressFromPubKey(publicKey: Buffer | Uint8Array) {
+  return addressFromPublicKeys(
+    MAINNET
+      ? StacksNetworkVersion.mainnetP2PKH
+      : StacksNetworkVersion.testnetP2PKH,
+    AddressHashMode.SerializeP2PKH,
+    1,
+    [publicKeyFromBuffer(publicKey)]
+  );
 }

@@ -4,6 +4,7 @@
   "license": "GPLV3",
   "description": "Scripts for CityCoins",
   "dependencies": {
+    "@noble/secp256k1": "^1.7.0",
     "@stacks/stacks-blockchain-api-types": "^4.1.2",
     "bip32": "^3.1.0",
     "bip39": "^3.0.4",

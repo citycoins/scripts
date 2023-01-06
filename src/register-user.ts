@@ -43,15 +43,6 @@ async function setUserConfig() {
         ],
       },
       {
-        type: "text",
-        name: "stxSender",
-        message: "Stacks Address to register with?",
-        validate: (value: string) =>
-          validateStacksAddress(value)
-            ? true
-            : "Valid Stacks address is required",
-      },
-      {
         type: "password",
         name: "stxMnemonic",
         message: "Seed phrase for Stacks address?",
@@ -90,7 +81,9 @@ async function registerUser(config: any) {
   printDivider();
   console.log("REGISTERING USER");
   printDivider();
-  printAddress(config.stxSender);
+  const { address, key } = await deriveChildAccount(config.stxMnemonic, 1); // target 2nd account
+  console.log(`address for key: ${address}`);
+  // printAddress(config.stxSender);
   console.log(`memo: ${config.memo ? config.memo : "(none)"}`);
   // TODO: check if contract activated (get-activation-status)
   // TODO: check if user already registered
@@ -99,7 +92,7 @@ async function registerUser(config: any) {
   console.log(`currentBlockHeight: ${currentBlockHeight}`);
   // get info for transactions
   const cityConfig = await getFullCityConfig(config.citycoin.toLowerCase());
-  let nonce = await getNonce(config.stxSender);
+  let nonce = await getNonce(address);
   console.log(`nonce: ${nonce}`);
   printDivider();
   const version = await selectCityVersion(
@@ -108,13 +101,12 @@ async function registerUser(config: any) {
   );
   if (version === "")
     exitError(`Error: no version found for ${config.citycoin}`);
-  const privKey = await deriveChildAccount(config.stxMnemonic, 1); // target 2nd account
   const txOptions = {
     contractAddress: cityConfig[version].deployer,
     contractName: cityConfig[version].core.name,
     functionName: "register-user",
     functionArgs: config.memo ? [stringUtf8CV(config.memo)] : [noneCV()],
-    senderKey: privKey,
+    senderKey: key,
     fee: DEFAULT_FEE,
     nonce: nonce,
     postConditionMode: PostConditionMode.Deny,
