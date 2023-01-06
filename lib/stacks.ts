@@ -17,7 +17,7 @@ export const STACKS_MAINNET = new StacksMainnet({
 export const STACKS_TESTNET = new StacksTestnet({
   coreApiUrl: "https://stacks-node-api.testnet.stacks.co",
 });
-export const STACKS_NETWORK = STACKS_MAINNET;
+export const STACKS_NETWORK = STACKS_TESTNET;
 
 // get current Stacks block height
 export async function getStacksBlockHeight(): Promise<number> {

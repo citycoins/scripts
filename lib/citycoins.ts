@@ -342,6 +342,13 @@ export async function getCCBalance(
   return result.value;
 }
 
+export async function getActivationStatus(
+  version: string,
+  city: string
+): Promise<any> {
+  const url = `${CC_API_BASE}/${version}/${city}/`;
+}
+
 export async function getMiningStatsAtBlock(
   version: string,
   city: string,
