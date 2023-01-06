@@ -7,7 +7,10 @@ import { StacksMainnet, StacksTestnet } from "micro-stacks/network";
 import {
   addressFromPublicKeys,
   AddressHashMode,
+  createStacksPrivateKey,
+  getPublicKeyFromStacksPrivateKey,
   publicKeyFromBuffer,
+  publicKeyToString,
   TxBroadcastResult,
 } from "micro-stacks/transactions";
 import {
@@ -24,14 +27,14 @@ import { bytesToHex } from "micro-stacks/common";
 import { addressToString } from "micro-stacks/clarity";
 
 // mainnet toggle, otherwise testnet
-const mainnet = false;
+export const MAINNET = false;
 
 // bitcoin constants
 const ECPair = ECPairFactory(ecc);
 const bip32 = BIP32Factory(ecc);
 const BITCOIN_TESTNET = bitcoin.networks.testnet;
 const BITCOIN_MAINNET = bitcoin.networks.bitcoin;
-export const BITCOIN_NETWORK = mainnet ? BITCOIN_MAINNET : BITCOIN_TESTNET;
+export const BITCOIN_NETWORK = MAINNET ? BITCOIN_MAINNET : BITCOIN_TESTNET;
 
 // stacks constants
 const STACKS_MAINNET = new StacksMainnet({
@@ -40,7 +43,9 @@ const STACKS_MAINNET = new StacksMainnet({
 const STACKS_TESTNET = new StacksTestnet({
   coreApiUrl: "https://stacks-node-api.testnet.stacks.co",
 });
-export const STACKS_NETWORK = mainnet ? STACKS_MAINNET : STACKS_TESTNET;
+export const STACKS_NETWORK: StacksMainnet | StacksTestnet = MAINNET
+  ? STACKS_MAINNET
+  : STACKS_TESTNET;
 
 // get current Stacks block height
 export async function getStacksBlockHeight(): Promise<number> {
@@ -181,8 +186,47 @@ export async function deriveChildAccount(mnemonic: string, index: number) {
   const child = master.derivePath(`m/44'/5757'/0'/0/${index}`);
   const ecPair = ECPair.fromPrivateKey(child.privateKey!);
   const childPrivateKeyHex = bytesToHex(ecPair.privateKey!);
+  console.log(
+    `child.privateKey (${typeof child.privateKey}): ${bytesToHex(
+      child.privateKey!
+    )}`
+  );
+  console.log(
+    `ecPairPrivateKey (${typeof ecPair.privateKey}): ${bytesToHex(
+      ecPair.privateKey!
+    )}`
+  );
+  console.log(
+    `ecPairPublicKey (${typeof ecPair.publicKey}): ${bytesToHex(
+      ecPair.publicKey!
+    )}`
+  );
+  console.log(
+    `childPrivateKeyHex (${typeof childPrivateKeyHex}): ${childPrivateKeyHex}`
+  );
+
+  const stxPrivateKey = createStacksPrivateKey(childPrivateKeyHex);
+  const stxPublicKey = getPublicKeyFromStacksPrivateKey(stxPrivateKey);
+  console.log(
+    `stxPrivateKey: ${bytesToHex(stxPrivateKey.data)} ${
+      stxPrivateKey.compressed && " (compressed)"
+    }`
+  );
+  console.log(`stxPublicKey: ${publicKeyToString(stxPublicKey)}`);
+
+  const derivedStxAddress = addressFromPublicKeys(
+    MAINNET
+      ? StacksNetworkVersion.mainnetP2PKH
+      : StacksNetworkVersion.testnetP2PKH,
+    AddressHashMode.SerializeP2PKH,
+    1,
+    [publicKeyFromBuffer(stxPublicKey.data)]
+  );
+  console.log("address from public key: ");
+  console.log(addressToString(derivedStxAddress));
+
   const stxAddress = addressFromPublicKeys(
-    mainnet
+    MAINNET
       ? StacksNetworkVersion.mainnetP2PKH
       : StacksNetworkVersion.testnetP2PKH,
     AddressHashMode.SerializeP2PKH,

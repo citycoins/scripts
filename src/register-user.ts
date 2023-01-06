@@ -1,4 +1,5 @@
-import { addressToString, noneCV, stringUtf8CV } from "micro-stacks/clarity";
+import prompts from "prompts";
+import { noneCV, stringUtf8CV } from "micro-stacks/clarity";
 import { validateStacksAddress } from "micro-stacks/crypto";
 import {
   AnchorMode,
@@ -6,7 +7,6 @@ import {
   makeContractCall,
   PostConditionMode,
 } from "micro-stacks/transactions";
-import prompts from "prompts";
 import { getFullCityConfig, selectCityVersion } from "../lib/citycoins";
 import {
   deriveChildAccount,
@@ -59,13 +59,6 @@ async function setUserConfig() {
           value === "" ? "Stacks seed phrase is required" : true,
       },
       {
-        type: "password",
-        name: "stxPrivateKey",
-        message: "Private Key for Stacks address?",
-        validate: (value: string) =>
-          value === "" ? "Stacks private key is required" : true,
-      },
-      {
         type: "text",
         name: "memo",
         message: "Memo for registration?",
@@ -115,12 +108,13 @@ async function registerUser(config: any) {
   );
   if (version === "")
     exitError(`Error: no version found for ${config.citycoin}`);
+  const privKey = await deriveChildAccount(config.stxMnemonic, 1); // target 2nd account
   const txOptions = {
     contractAddress: cityConfig[version].deployer,
     contractName: cityConfig[version].core.name,
     functionName: "register-user",
     functionArgs: config.memo ? [stringUtf8CV(config.memo)] : [noneCV()],
-    senderKey: config.stxPrivateKey,
+    senderKey: privKey,
     fee: DEFAULT_FEE,
     nonce: nonce,
     postConditionMode: PostConditionMode.Deny,
@@ -128,17 +122,26 @@ async function registerUser(config: any) {
     network: STACKS_NETWORK,
     anchorMode: AnchorMode.Any,
   };
-  const privKey = await deriveChildAccount(config.stxMnemonic, 1); // target 2nd account
-  /*
+  console.log("txOptions:");
+  console.log(JSON.stringify(txOptions, null, 2));
   try {
     // create contract call and broadcast
     const transaction = await makeContractCall(txOptions);
+    console.log("tx:");
+    console.log(
+      JSON.stringify(
+        transaction,
+        (key, value) =>
+          typeof value === "bigint" ? value.toString() + "n" : value,
+        2
+      )
+    );
     const broadcastResult = await broadcastTransaction(
       transaction,
       STACKS_NETWORK
     );
-    // check broadcast result
-    await sleep(1000); // patience is a virtue
+    // check broadcast result after delay
+    await sleep(1000);
     if ("error" in broadcastResult) {
       console.log(`error: ${broadcastResult.reason}`);
       console.log(`details:\n${JSON.stringify(broadcastResult.reason_data)}`);
@@ -148,7 +151,6 @@ async function registerUser(config: any) {
   } catch (err) {
     exitError(String(err));
   }
-  */
 }
 
 async function main() {
