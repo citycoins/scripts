@@ -1,5 +1,15 @@
 import "cross-fetch/polyfill";
 import prompts from "prompts";
+import { listCV, UIntCV, uintCV } from "micro-stacks/clarity";
+import { validateStacksAddress } from "micro-stacks/crypto";
+import {
+  AnchorMode,
+  broadcastTransaction,
+  FungibleConditionCode,
+  makeContractCall,
+  makeStandardSTXPostCondition,
+  PostConditionMode,
+} from "micro-stacks/transactions";
 import {
   cancelPrompt,
   disclaimerIntro,
@@ -19,21 +29,11 @@ import {
   monitorTx,
   STACKS_NETWORK,
 } from "../lib/stacks";
-import { validateStacksAddress } from "micro-stacks/crypto";
 import {
   getFullCityConfig,
   getMiningStatsAtBlock,
   selectCityVersion,
 } from "../lib/citycoins";
-import { listCV, UIntCV, uintCV } from "micro-stacks/clarity";
-import {
-  AnchorMode,
-  broadcastTransaction,
-  FungibleConditionCode,
-  makeContractCall,
-  makeStandardSTXPostCondition,
-  PostConditionMode,
-} from "micro-stacks/transactions";
 
 async function setUserConfig() {
   printDivider();
@@ -489,8 +489,5 @@ async function main() {
 main();
 
 function fixBigInt(key: any, value: any) {
-  if (typeof value === "bigint") {
-    return value.toString() + "n";
-  }
-  return value;
+  return typeof value === "bigint" ? value.toString() + "n" : value;
 }

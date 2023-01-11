@@ -1,25 +1,6 @@
-import * as bip39 from "bip39";
-import BIP32Factory from "bip32";
-import ECPairFactory from "ecpair";
 import * as bitcoin from "bitcoinjs-lib";
-import * as ecc from "tiny-secp256k1";
 import { StacksMainnet, StacksTestnet } from "micro-stacks/network";
-import {
-  addressFromPublicKeys,
-  AddressHashMode,
-  createStacksPrivateKey,
-  getPublicKeyFromStacksPrivateKey,
-  pubKeyfromPrivKey,
-  publicKeyFromBuffer,
-  TxBroadcastResult,
-} from "micro-stacks/transactions";
-import {
-  getAddressFromPrivateKey,
-  publicKeyToString,
-  TransactionVersion,
-  getPublicKey as getStacksPublicKey,
-  getAddressFromPublicKey,
-} from "@stacks/transactions";
+import { TxBroadcastResult } from "micro-stacks/transactions";
 import {
   debugLog,
   exitError,
@@ -29,13 +10,7 @@ import {
   printTimeStamp,
   sleep,
 } from "./utils";
-import {
-  publicKeyToBase58Address,
-  StacksNetworkVersion,
-} from "micro-stacks/crypto";
-import { bytesToHex } from "micro-stacks/common";
-import { addressToString } from "micro-stacks/clarity";
-import { getPublicKey } from "@noble/secp256k1";
+import { TransactionVersion } from "micro-stacks/common";
 import {
   generateNewAccount,
   generateWallet,
@@ -46,8 +21,6 @@ import {
 export const MAINNET = false;
 
 // bitcoin constants
-const ECPair = ECPairFactory(ecc);
-const bip32 = BIP32Factory(ecc);
 const BITCOIN_TESTNET = bitcoin.networks.testnet;
 const BITCOIN_MAINNET = bitcoin.networks.bitcoin;
 export const BITCOIN_NETWORK = MAINNET ? BITCOIN_MAINNET : BITCOIN_TESTNET;
@@ -205,38 +178,12 @@ export async function deriveChildAccount(mnemonic: string, index: number) {
   // create a Stacks wallet with the mnemonic
   let wallet = await generateWallet({
     secretKey: mnemonic,
-    password: "StacksOnStacks",
+    password: "StacksOnStacks", // TODO: best approach for using temporarily?
   });
   // add a new account to reach the selected index
   for (let i = 0; i <= index; i++) {
     wallet = generateNewAccount(wallet);
   }
-
-  /*
-  printDivider();
-  console.log(`check wallet data from sdk`);
-  wallet.accounts.map((account) => {
-    const stxPublicKey = publicKeyToString(
-      getStacksPublicKey(createStacksPrivateKey(account.stxPrivateKey))
-    );
-    printDivider();
-    console.log(`private key: ${account.stxPrivateKey}`);
-    console.log({
-      stxAddress: getAddressFromPrivateKey(
-        account.stxPrivateKey,
-        STACKS_TX_VERSION
-      ),
-      stxPubKey: stxPublicKey,
-      stxAddressPub: getAddressFromPublicKey(stxPublicKey, STACKS_TX_VERSION),
-    });
-    console.log(
-      `getStxAddress: ${getStxAddress({
-        account: account,
-        transactionVersion: STACKS_TX_VERSION,
-      })}`
-    );
-  });
-  */
 
   // return address and key for selected index
   return {
