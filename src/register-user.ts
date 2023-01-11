@@ -81,7 +81,7 @@ async function registerUser(config: any) {
   printDivider();
   console.log("REGISTERING USER");
   printDivider();
-  const { address, key } = await deriveChildAccount(config.stxMnemonic, 1); // target 2nd account
+  const { address, key } = await deriveChildAccount(config.stxMnemonic, 2); // target index
   console.log(`address for key: ${address}`);
   // printAddress(config.stxSender);
   console.log(`memo: ${config.memo ? config.memo : "(none)"}`);

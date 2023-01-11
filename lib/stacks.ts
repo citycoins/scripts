@@ -11,9 +11,15 @@ import {
   getPublicKeyFromStacksPrivateKey,
   pubKeyfromPrivKey,
   publicKeyFromBuffer,
-  publicKeyToString,
   TxBroadcastResult,
 } from "micro-stacks/transactions";
+import {
+  getAddressFromPrivateKey,
+  publicKeyToString,
+  TransactionVersion,
+  getPublicKey as getStacksPublicKey,
+  getAddressFromPublicKey,
+} from "@stacks/transactions";
 import {
   debugLog,
   exitError,
@@ -23,10 +29,18 @@ import {
   printTimeStamp,
   sleep,
 } from "./utils";
-import { StacksNetworkVersion } from "micro-stacks/crypto";
+import {
+  publicKeyToBase58Address,
+  StacksNetworkVersion,
+} from "micro-stacks/crypto";
 import { bytesToHex } from "micro-stacks/common";
 import { addressToString } from "micro-stacks/clarity";
 import { getPublicKey } from "@noble/secp256k1";
+import {
+  generateNewAccount,
+  generateWallet,
+  getStxAddress,
+} from "@stacks/wallet-sdk";
 
 // mainnet toggle, otherwise testnet
 export const MAINNET = false;
@@ -48,6 +62,9 @@ const STACKS_TESTNET = new StacksTestnet({
 export const STACKS_NETWORK: StacksMainnet | StacksTestnet = MAINNET
   ? STACKS_MAINNET
   : STACKS_TESTNET;
+export const STACKS_TX_VERSION = MAINNET
+  ? TransactionVersion.Mainnet
+  : TransactionVersion.Testnet;
 
 // get current Stacks block height
 export async function getStacksBlockHeight(): Promise<number> {
@@ -159,6 +176,9 @@ export async function monitorTx(
     if ("error" in broadcastedResult) {
       console.log(`error: ${broadcastedResult.reason}`);
       console.log(`details:\n${JSON.stringify(broadcastedResult.reason_data)}`);
+      console.log(
+        `full error: ${(JSON.stringify(broadcastedResult), null, 2)}`
+      );
       return 0;
     } else {
       if (txResult.tx_status === "success") {
@@ -182,96 +202,48 @@ export async function monitorTx(
 }
 
 export async function deriveChildAccount(mnemonic: string, index: number) {
-  const seed = await bip39.mnemonicToSeed(mnemonic);
-  if (!seed) exitError("Unable to derive seed from mnemonic");
-  const master = bip32.fromSeed(seed);
-  const child = master.derivePath(`m/44'/5757'/0'/0/${index}`);
-  const ecPair = ECPair.fromPrivateKey(child.privateKey!);
-  const childPrivateKeyHex = bytesToHex(ecPair.privateKey!);
-  const stxPrivateKey = createStacksPrivateKey(childPrivateKeyHex);
-  const stxPublicKey = getPublicKeyFromStacksPrivateKey(stxPrivateKey);
-  const directPublicKey = pubKeyfromPrivKey(child.privateKey!);
-  const directPublicKey2 = pubKeyfromPrivKey(childPrivateKeyHex);
-  const noblePublicKeyUncompressed = getPublicKey(child.privateKey!, false);
-  const noblePublicKeyCompressed = getPublicKey(child.privateKey!, true); // isCompressed = true yields same public key as ecPair
-
-  // check private keys
-  console.log(`child.privateKey: ${bytesToHex(child.privateKey!)}`);
-  console.log(`ecPairPrivateKey: ${bytesToHex(ecPair.privateKey!)}`);
-  console.log(`childPrivateKeyHex: ${childPrivateKeyHex}`);
-  console.log(
-    `stxPrivateKey: ${bytesToHex(stxPrivateKey.data)} ${
-      stxPrivateKey.compressed && " (compressed)"
-    }`
-  );
-  console.log(
-    `stxSlicedPrivateKey: ${bytesToHex(stxPrivateKey.data.slice(0, 32))}`
-  );
-
-  // check public keys
-  console.log(`ecPairPublicKey: ${bytesToHex(ecPair.publicKey!)}`);
-  console.log(`stxPublicKey: ${bytesToHex(stxPublicKey.data)}`);
-  console.log(`directPublicKey: ${bytesToHex(directPublicKey.data)}`);
-  console.log(`directPublicKey2: ${bytesToHex(directPublicKey2.data)}`);
-  console.log(
-    `noblePublicKeyUncompressed: ${bytesToHex(noblePublicKeyUncompressed)}`
-  );
-  console.log(
-    `noblePublicKeyCompressed: ${bytesToHex(noblePublicKeyCompressed)}`
-  );
-
-  const ecPairStxAddress = addressFromPubKey(ecPair.publicKey);
-  const stxPublicKeyAddress = addressFromPubKey(stxPublicKey.data);
-  const directPublicKeyAddress = addressFromPubKey(directPublicKey.data);
-  const directPublicKey2Address = addressFromPubKey(directPublicKey2.data);
-  const noblePublicKeyUncompressedAddress = addressFromPubKey(
-    noblePublicKeyUncompressed
-  );
-  const noblePublicKeyCompressedAddress = addressFromPubKey(
-    noblePublicKeyCompressed
-  );
-
-  // check addresses
-  console.log(`ecPairStxAddress: ${addressToString(ecPairStxAddress)}`);
-  console.log(`stxPublicKeyAddress: ${addressToString(stxPublicKeyAddress)}`);
-  console.log(
-    `directPublicKeyAddress: ${addressToString(directPublicKeyAddress)}`
-  );
-  console.log(
-    `directPublicKey2Address: ${addressToString(directPublicKey2Address)}`
-  );
-  console.log(
-    `noblePublicKeyUncompressedAddress: ${addressToString(
-      noblePublicKeyUncompressedAddress
-    )}`
-  );
-  console.log(
-    `noblePublicKeyCompressedAddress: ${addressToString(
-      noblePublicKeyCompressedAddress
-    )}`
-  );
-
-  const { address: btcAddress } = bitcoin.payments.p2pkh({
-    pubkey: ecPair.publicKey,
-    network: bitcoin.networks.testnet,
+  // create a Stacks wallet with the mnemonic
+  let wallet = await generateWallet({
+    secretKey: mnemonic,
+    password: "StacksOnStacks",
   });
+  // add a new account to reach the selected index
+  for (let i = 0; i <= index; i++) {
+    wallet = generateNewAccount(wallet);
+  }
 
+  /*
   printDivider();
-  const stxAddress = noblePublicKeyCompressedAddress;
-  console.log(`stxAddress: ${addressToString(stxAddress)}`);
-  console.log(`privateKey: ${childPrivateKeyHex}`);
-  console.log(`btcAddress: ${btcAddress}`);
+  console.log(`check wallet data from sdk`);
+  wallet.accounts.map((account) => {
+    const stxPublicKey = publicKeyToString(
+      getStacksPublicKey(createStacksPrivateKey(account.stxPrivateKey))
+    );
+    printDivider();
+    console.log(`private key: ${account.stxPrivateKey}`);
+    console.log({
+      stxAddress: getAddressFromPrivateKey(
+        account.stxPrivateKey,
+        STACKS_TX_VERSION
+      ),
+      stxPubKey: stxPublicKey,
+      stxAddressPub: getAddressFromPublicKey(stxPublicKey, STACKS_TX_VERSION),
+    });
+    console.log(
+      `getStxAddress: ${getStxAddress({
+        account: account,
+        transactionVersion: STACKS_TX_VERSION,
+      })}`
+    );
+  });
+  */
 
-  return { address: addressToString(stxAddress), key: childPrivateKeyHex };
-}
-
-function addressFromPubKey(publicKey: Buffer | Uint8Array) {
-  return addressFromPublicKeys(
-    MAINNET
-      ? StacksNetworkVersion.mainnetP2PKH
-      : StacksNetworkVersion.testnetP2PKH,
-    AddressHashMode.SerializeP2PKH,
-    1,
-    [publicKeyFromBuffer(publicKey)]
-  );
+  // return address and key for selected index
+  return {
+    address: getStxAddress({
+      account: wallet.accounts[index],
+      transactionVersion: STACKS_TX_VERSION,
+    }),
+    key: wallet.accounts[index].stxPrivateKey,
+  };
 }
