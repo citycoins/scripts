@@ -1,6 +1,10 @@
 import * as bitcoin from "bitcoinjs-lib";
 import { StacksMainnet, StacksTestnet } from "micro-stacks/network";
-import { TxBroadcastResult } from "micro-stacks/transactions";
+import {
+  broadcastTransaction,
+  makeContractCall,
+  TxBroadcastResult,
+} from "micro-stacks/transactions";
 import {
   debugLog,
   exitError,
@@ -26,18 +30,31 @@ const BITCOIN_MAINNET = bitcoin.networks.bitcoin;
 export const BITCOIN_NETWORK = MAINNET ? BITCOIN_MAINNET : BITCOIN_TESTNET;
 
 // stacks constants
+export const DEFAULT_FEE = 50000; // 0.05 STX per TX
 const STACKS_MAINNET = new StacksMainnet({
   coreApiUrl: "https://stacks-node-api.mainnet.stacks.co",
 });
 const STACKS_TESTNET = new StacksTestnet({
   coreApiUrl: "https://stacks-node-api.testnet.stacks.co",
 });
+// TODO: remove in favor of NETWORK
 export const STACKS_NETWORK: StacksMainnet | StacksTestnet = MAINNET
   ? STACKS_MAINNET
   : STACKS_TESTNET;
+// TODO: remove in favor of TX_VERSION
 export const STACKS_TX_VERSION = MAINNET
   ? TransactionVersion.Mainnet
   : TransactionVersion.Testnet;
+
+export const NETWORK = (network: string) => {
+  if (network === "mainnet") {
+    return STACKS_MAINNET;
+  } else if (network === "testnet") {
+    return STACKS_TESTNET;
+  } else {
+    return STACKS_TESTNET;
+  }
+};
 
 const TX_VERSION = (network: string) => {
   if (network === "mainnet") {
@@ -182,6 +199,28 @@ export async function monitorTx(
   exitError(
     "Unable to find target block height for next transaction, exiting..."
   );
+}
+
+export async function submitTx(txOptions: any, network: string) {
+  try {
+    const transaction = await makeContractCall(txOptions);
+    const broadcastResult = await broadcastTransaction(
+      transaction,
+      NETWORK(network)
+    );
+    if ("error" in broadcastResult) {
+      console.log(`error: ${broadcastResult.reason}`);
+      console.log(`details:\n${JSON.stringify(broadcastResult.reason_data)}`);
+      exitError("Error broadcasting transaction, exiting...");
+    }
+    console.log(
+      `link: https://explorer.stacks.co/txid/${transaction.txid()}?chain=${network}`
+    );
+  } catch (err) {
+    exitError(
+      `${String(err)}\nGeneric error broadcasting transaction, exiting...`
+    );
+  }
 }
 
 // TODO: best approach for using wallet data temporarily

@@ -480,6 +480,7 @@ async function main() {
     "Builds and submits mine-many transactions for CityCoins on Stacks with advanced options including continuous mining and automatic commit/fee calculations.",
     true
   );
+  // TODO: refactor to getUserConfig() in utils
   const config = await setUserConfig();
   const strategy = await setStrategy(config);
   await mineManyTestnet(config, strategy);

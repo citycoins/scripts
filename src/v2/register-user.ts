@@ -151,6 +151,7 @@ async function main() {
     "Builds and submits a register-user transaction for a given city.",
     true
   );
+  // TODO: refactor to getUserConfig() in utils
   const config = await setUserConfig();
   await registerUser(config);
   printDivider();

@@ -17,13 +17,13 @@ import {
   printDivider,
   getUserConfig,
   sleep,
-  fixBigInt,
 } from "../../lib/utils";
 import {
+  DEFAULT_FEE,
   deriveChildAccount,
   getNonce,
   getStacksBlockHeight,
-  STACKS_NETWORK,
+  NETWORK,
 } from "../../lib/stacks";
 import {
   canClaimMiningReward,
@@ -31,54 +31,7 @@ import {
   selectCityVersion,
 } from "../../lib/citycoins";
 
-const DEFAULT_FEE = 50000; // 0.05 STX per TX
-
-/*
-async function setUserConfig() {
-  printDivider();
-  console.log("SETTING CONFIGURATION");
-  printDivider();
-  // prompt for user config
-  const userConfig = await prompts(
-    [
-      {
-        type: "number",
-        name: "startBlock",
-        message: "Start block to claim from?",
-        validate: (value) =>
-          value < 1 ? "Value must be greater than 0" : true,
-      },
-      {
-        type: "number",
-        name: "endBlock",
-        message: "End block to claim to?",
-        validate: (value) =>
-          value < 1 ? "Value must be greater than 0" : true,
-      },
-      {
-        type: "toggle",
-        name: "customFee",
-        message: `Set custom fee per TX?`,
-        initial: false,
-        active: "Yes",
-        inactive: "No",
-      },
-      {
-        type: (prev) => (prev ? "number" : null),
-        name: "customFeeValue",
-        message: "Custom fee value in uSTX? (1,000,000 uSTX = 1 STX)",
-        validate: (value) =>
-          value > 0 ? true : "Value must be greater than 0",
-      },
-    ],
-    {
-      onCancel: (prompt: any) => cancelPrompt(prompt.name),
-    }
-  );
-  return userConfig;
-}
-*/
-async function getScriptConfig(userConfig: any) {
+async function getScriptConfig() {
   printDivider();
   console.log("SETTING SCRIPT CONFIGURATION");
   printDivider();
@@ -211,7 +164,7 @@ async function claimMiningRewards(userConfig: any, scriptConfig: any) {
       nonce: nonce,
       postConditionMode: PostConditionMode.Deny,
       postConditions: [],
-      network: STACKS_NETWORK,
+      network: NETWORK(userConfig.network),
       anchorMode: AnchorMode.Any,
     };
     try {
@@ -219,7 +172,7 @@ async function claimMiningRewards(userConfig: any, scriptConfig: any) {
       const transaction = await makeContractCall(txOptions);
       const broadcastResult = await broadcastTransaction(
         transaction,
-        STACKS_NETWORK
+        NETWORK(userConfig.network)
       );
       if ("error" in broadcastResult) {
         console.log(`error: ${broadcastResult.reason}`);
@@ -239,7 +192,7 @@ async function claimMiningRewards(userConfig: any, scriptConfig: any) {
       console.log(`counter: ${counter} of ${claimLimit}`);
       console.log(`nonce: ${nonce}`);
     } catch (err) {
-      exitError(String(err));
+      exitError(`Generic error broadcasting transaction: ${String(err)}`);
     }
     // }
     // avoid rate limiting
@@ -253,13 +206,8 @@ async function main() {
     "Builds and submits claim-mining-reward transactions for a given range of block heights.",
     true
   );
-  // get user configuration
   const userConfig = await getUserConfig();
-  console.log(JSON.stringify(userConfig, null, 2));
-  // get script configuration
-  const scriptConfig = await getScriptConfig(userConfig);
-  console.log(JSON.stringify(scriptConfig, null, 2));
-  // claim mining rewards
+  const scriptConfig = await getScriptConfig();
   await claimMiningRewards(userConfig, scriptConfig);
   printDivider();
   exitSuccess("all actions complete, script exiting...");
