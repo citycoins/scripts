@@ -7,13 +7,13 @@ import {
   makeContractCall,
   PostConditionMode,
 } from "micro-stacks/transactions";
-import { getFullCityConfig, selectCityVersion } from "../lib/citycoins";
+import { getFullCityConfig, selectCityVersion } from "../../lib/citycoins";
 import {
   deriveChildAccount,
   getNonce,
   getStacksBlockHeight,
   STACKS_NETWORK,
-} from "../lib/stacks";
+} from "../../lib/stacks";
 import {
   cancelPrompt,
   disclaimerIntro,
@@ -22,7 +22,7 @@ import {
   printAddress,
   printDivider,
   sleep,
-} from "../lib/utils";
+} from "../../lib/utils";
 
 const DEFAULT_FEE = 1000000; // 1 STX per TX
 

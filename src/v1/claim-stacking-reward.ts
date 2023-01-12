@@ -8,8 +8,8 @@ import {
   fromMicro,
   printAddress,
   printDivider,
-} from "../lib/utils";
-import { getNonce, getStacksBlockHeight } from "../lib/stacks";
+} from "../../lib/utils";
+import { getNonce, getStacksBlockHeight } from "../../lib/stacks";
 import {
   getCityInfo,
   getFullCityConfig,
@@ -18,7 +18,7 @@ import {
   getStackingReward,
   getUserId,
   UserIds,
-} from "../lib/citycoins";
+} from "../../lib/citycoins";
 
 const DEFAULT_FEE = 50000; // 0.05 STX per TX
 

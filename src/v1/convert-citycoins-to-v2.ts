@@ -7,9 +7,9 @@ import {
   exitError,
   exitSuccess,
   printDivider,
-} from "../lib/utils";
-import { getNonce, STACKS_NETWORK } from "../lib/stacks";
-import { getCCBalance } from "../lib/citycoins";
+} from "../../lib/utils";
+import { getNonce, STACKS_NETWORK } from "../../lib/stacks";
+import { getCCBalance } from "../../lib/citycoins";
 import {
   PostConditionMode,
   makeStandardFungiblePostCondition,

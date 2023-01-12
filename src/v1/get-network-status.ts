@@ -3,13 +3,13 @@ import {
   getOptimalFee,
   getStacksBlockHeight,
   getTotalMempoolTx,
-} from "../lib/stacks";
+} from "../../lib/stacks";
 import {
   disclaimerIntro,
   exitError,
   exitSuccess,
   printDivider,
-} from "../lib/utils";
+} from "../../lib/utils";
 
 async function getNetworkStatus() {
   const userConfig = await prompts({

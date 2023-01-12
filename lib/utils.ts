@@ -194,7 +194,7 @@ export async function setAddressConfig(userConfig: any) {
       validate: (value: number) =>
         value < 0 ? "Account index must be greater than 0" : true,
     },
-    // TODO: LEFT OFF HERE
+    /* TODO: LEFT OFF HERE
     {
       type: "text",
       name: "stxAddress",
@@ -203,6 +203,7 @@ export async function setAddressConfig(userConfig: any) {
         return await getChildAccount(userConfig.stxMnemonic, prev);
       },
     },
+    */
   ]);
   return addressConfig;
 }

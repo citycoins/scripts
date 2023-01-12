@@ -9,14 +9,18 @@ import {
   printAddress,
   printDivider,
   sleep,
-} from "../lib/utils";
-import { getNonce, getStacksBlockHeight, STACKS_NETWORK } from "../lib/stacks";
+} from "../../lib/utils";
+import {
+  getNonce,
+  getStacksBlockHeight,
+  STACKS_NETWORK,
+} from "../../lib/stacks";
 import { validateStacksAddress } from "micro-stacks/crypto";
 import {
   canClaimMiningReward,
   getFullCityConfig,
   selectCityVersion,
-} from "../lib/citycoins";
+} from "../../lib/citycoins";
 import { uintCV } from "micro-stacks/clarity";
 import {
   AnchorMode,

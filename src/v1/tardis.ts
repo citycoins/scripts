@@ -2,13 +2,13 @@ import "cross-fetch/polyfill";
 import prompts from "prompts";
 import { fetchReadOnlyFunction } from "micro-stacks/api";
 import { standardPrincipalCV, uintCV } from "micro-stacks/clarity";
-import { STACKS_NETWORK } from "../lib/stacks";
+import { STACKS_NETWORK } from "../../lib/stacks";
 import {
   cancelPrompt,
   disclaimerIntro,
   exitSuccess,
   printDivider,
-} from "../lib/utils";
+} from "../../lib/utils";
 
 async function setUserConfig() {
   printDivider();
