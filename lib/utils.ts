@@ -46,6 +46,11 @@ export const exitError = (msg: string) => {
   process.exit(1);
 };
 
+// replace for BigInt JSON.stringify() bug
+export function fixBigInt(key: any, value: any) {
+  return typeof value === "bigint" ? value.toString() + "n" : value;
+}
+
 // async sleep timer
 export const sleep = (ms: number) =>
   new Promise((resolve) => setTimeout(resolve, ms));
@@ -156,21 +161,26 @@ export async function getUserConfig(keyRequired = true) {
   });
   // add an option for specifying a higher index
   addressChoices.push({ title: "Other...", value: -1 });
-  const addressConfig = await prompts([
+  const addressConfig = await prompts(
+    [
+      {
+        type: "select",
+        name: "index",
+        message: "Select an address listed below:",
+        choices: addressChoices,
+      },
+      {
+        type: (prev) => (prev === -1 ? "number" : null),
+        name: "index",
+        message: "Enter the desired account index:",
+        validate: (value: number) =>
+          value < 0 ? "Account index must be greater than 0" : true,
+      },
+    ],
     {
-      type: "select",
-      name: "index",
-      message: "Select an address listed below:",
-      choices: addressChoices,
-    },
-    {
-      type: (prev) => (prev === -1 ? "number" : null),
-      name: "index",
-      message: "Enter the desired account index:",
-      validate: (value: number) =>
-        value < 0 ? "Account index must be greater than 0" : true,
-    },
-  ]);
+      onCancel: (prompt: any) => cancelPrompt(prompt.name),
+    }
+  );
 
   // confirm selected address
   const { address } = await getChildAccount(
@@ -178,16 +188,21 @@ export async function getUserConfig(keyRequired = true) {
     addressConfig.index,
     userConfig.network
   );
-  const addressConfirm = await prompts([
+  const addressConfirm = await prompts(
+    [
+      {
+        type: "toggle",
+        name: "value",
+        message: `Confirm address: ${address}`,
+        initial: true,
+        active: "Yes",
+        inactive: "No",
+      },
+    ],
     {
-      type: "toggle",
-      name: "value",
-      message: `Confirm address: ${address}`,
-      initial: true,
-      active: "Yes",
-      inactive: "No",
-    },
-  ]);
+      onCancel: (prompt: any) => cancelPrompt(prompt.name),
+    }
+  );
 
   if (!addressConfirm.value)
     exitError("ERROR: address not confirmed, exiting...");

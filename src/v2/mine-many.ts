@@ -15,6 +15,7 @@ import {
   disclaimerIntro,
   exitError,
   exitSuccess,
+  fixBigInt,
   fromMicro,
   printDivider,
   sleep,
@@ -487,7 +488,3 @@ async function main() {
 }
 
 main();
-
-function fixBigInt(key: any, value: any) {
-  return typeof value === "bigint" ? value.toString() + "n" : value;
-}
