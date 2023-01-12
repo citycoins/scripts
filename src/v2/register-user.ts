@@ -13,6 +13,7 @@ import {
   getNonce,
   getStacksBlockHeight,
   STACKS_NETWORK,
+  submitTx,
 } from "../../lib/stacks";
 import {
   cancelPrompt,
@@ -114,8 +115,7 @@ async function registerUser(config: any) {
     network: STACKS_NETWORK,
     anchorMode: AnchorMode.Any,
   };
-  console.log("txOptions:");
-  console.log(JSON.stringify(txOptions, null, 2));
+  // TODO: refactor to new submitTx() format
   try {
     // create contract call and broadcast
     const transaction = await makeContractCall(txOptions);

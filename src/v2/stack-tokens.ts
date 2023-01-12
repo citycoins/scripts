@@ -122,6 +122,8 @@ async function stackTokens(userConfig: any, scriptConfig: any) {
     userConfig.citycoin.toLowerCase(),
     currentBlockHeight
   );
+  if (version === "")
+    exitError(`Error: no version found for ${userConfig.citycoin}`);
   // configure transaction
   const txOptions = {
     contractAddress: cityConfig[version].deployer,

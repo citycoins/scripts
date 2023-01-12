@@ -24,6 +24,7 @@ import {
   getNonce,
   getStacksBlockHeight,
   NETWORK,
+  submitTx,
 } from "../../lib/stacks";
 import {
   canClaimMiningReward,
@@ -167,34 +168,17 @@ async function claimMiningRewards(userConfig: any, scriptConfig: any) {
       network: NETWORK(userConfig.network),
       anchorMode: AnchorMode.Any,
     };
-    try {
-      console.log(`claiming block: ${i}`);
-      const transaction = await makeContractCall(txOptions);
-      const broadcastResult = await broadcastTransaction(
-        transaction,
-        NETWORK(userConfig.network)
-      );
-      if ("error" in broadcastResult) {
-        console.log(`error: ${broadcastResult.reason}`);
-        console.log(`details:\n${JSON.stringify(broadcastResult.reason_data)}`);
-        exitError("Error broadcasting transaction, exiting...");
-      }
-      console.log(
-        `link: https://explorer.stacks.co/txid/${transaction.txid()}?chain=${
-          userConfig.network
-        }`
-      );
-      if (counter >= claimLimit) {
-        exitSuccess("claim limit reached, exiting...");
-      }
-      counter++;
-      nonce++;
-      console.log(`counter: ${counter} of ${claimLimit}`);
-      console.log(`nonce: ${nonce}`);
-    } catch (err) {
-      exitError(`Generic error broadcasting transaction: ${String(err)}`);
+    console.log(`claiming block: ${i}`);
+    await submitTx(txOptions, userConfig.network);
+    if (counter >= claimLimit) {
+      exitSuccess("claim limit reached, exiting...");
     }
+    counter++;
+    nonce++;
+    console.log(`counter: ${counter} of ${claimLimit}`);
+    console.log(`nonce: ${nonce}`);
     // }
+
     // avoid rate limiting
     await sleep(500);
   }
