@@ -438,7 +438,7 @@ async function mineManyTestnet(config: any, strategy: any): Promise<any> {
   // pause 10sec
   console.log("pausing 15sec before submit...");
   await sleep(15000);
-  // TODO: refactor to new submitTX() format
+  // TODO: refactor to new submitTx() format
   // submit tx
   try {
     console.log(`txOptions:\n${JSON.stringify(txOptions, fixBigInt, 2)}`);
