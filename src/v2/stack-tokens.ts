@@ -1,10 +1,8 @@
 import { uintCV } from "micro-stacks/clarity";
 import {
   AnchorMode,
-  broadcastTransaction,
   createAssetInfo,
   FungibleConditionCode,
-  makeContractCall,
   makeStandardFungiblePostCondition,
   PostConditionMode,
 } from "micro-stacks/transactions";
@@ -107,21 +105,23 @@ async function stackTokens(userConfig: any, scriptConfig: any) {
   printDivider();
   // get current block height
   const currentBlockHeight = await getStacksBlockHeight();
+
   // TODO: check that stacking is active
   // TODO: check if user has enough tokens to stack
+
   // get info for transactions
   const { key } = await deriveChildAccount(
     userConfig.mnemonic,
     userConfig.accountIndex
   );
-  const cityConfig = await getFullCityConfig(userConfig.citycoin.toLowerCase());
   let nonce = await getNonce(userConfig.address);
   console.log(`nonce: ${nonce}`);
+  // get citycoin configuration
+  const cityConfig = await getFullCityConfig(userConfig.citycoin.toLowerCase());
   const version = await selectCityVersion(
     userConfig.citycoin.toLowerCase(),
     currentBlockHeight
   );
-
   // configure transaction
   const txOptions = {
     contractAddress: cityConfig[version].deployer,
@@ -147,12 +147,7 @@ async function stackTokens(userConfig: any, scriptConfig: any) {
     network: NETWORK(userConfig.network),
     anchorMode: AnchorMode.Any,
   };
-
-  printDivider();
-  console.log("SENDING STACKING TRANSACTION");
-  printDivider();
   await submitTx(txOptions, userConfig.network);
-  return undefined;
 }
 
 async function main() {
@@ -162,9 +157,7 @@ async function main() {
     true
   );
   const userConfig = await getUserConfig();
-  console.log(JSON.stringify(userConfig, null, 2));
   const scriptConfig = await getScriptConfig();
-  console.log(JSON.stringify(scriptConfig, null, 2));
   await stackTokens(userConfig, scriptConfig);
   printDivider();
   exitSuccess("all actions complete, script exiting...");
