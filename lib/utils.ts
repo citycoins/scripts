@@ -78,14 +78,8 @@ export function disclaimerIntro(
   description: string,
   requiresKey: boolean
 ): void {
-  printDivider();
-  printDivider();
-  console.log(`${title.toUpperCase()}`);
-  printDivider();
-  printDivider();
-  console.log(description);
-  printDivider();
-  printDivider();
+  console.log(`\n===== ${title.toUpperCase()} =====\n`);
+  console.log(`${description}\n`);
   requiresKey &&
     console.log(
       "THIS IS ALPHA SOFTWARE THAT REQUIRES A STACKS PRIVATE KEY TO SEND A TRANSACTION.\n"
