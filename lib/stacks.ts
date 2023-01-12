@@ -39,6 +39,16 @@ export const STACKS_TX_VERSION = MAINNET
   ? TransactionVersion.Mainnet
   : TransactionVersion.Testnet;
 
+const TX_VERSION = (network: string) => {
+  if (network === "mainnet") {
+    return TransactionVersion.Mainnet;
+  } else if (network === "testnet") {
+    return TransactionVersion.Testnet;
+  } else {
+    return TransactionVersion.Testnet;
+  }
+};
+
 // get current Stacks block height
 export async function getStacksBlockHeight(): Promise<number> {
   const url = `${STACKS_NETWORK.getCoreApiUrl()}/v2/info`;
@@ -177,7 +187,11 @@ export async function monitorTx(
 // TODO: best approach for using wallet data temporarily
 const password = "StacksOnStacksOnStacks";
 
-export async function getChildAccounts(mnemonic: string, index: number) {
+export async function getChildAccounts(
+  mnemonic: string,
+  index: number,
+  network: string
+) {
   // create a Stacks wallet with the mnemonic
   let wallet = await generateWallet({
     secretKey: mnemonic,
@@ -191,7 +205,7 @@ export async function getChildAccounts(mnemonic: string, index: number) {
   const addresses = wallet.accounts.map((account) => {
     return getStxAddress({
       account: account,
-      transactionVersion: STACKS_TX_VERSION,
+      transactionVersion: TX_VERSION(network),
     });
   });
   const keys = wallet.accounts.map((account) => account.stxPrivateKey);
@@ -199,7 +213,11 @@ export async function getChildAccounts(mnemonic: string, index: number) {
 }
 
 // TODO: use to replace deriveChildAccount() below in refactor
-export async function getChildAccount(mnemonic: string, index: number) {
+export async function getChildAccount(
+  mnemonic: string,
+  index: number,
+  network: string
+) {
   // create a Stacks wallet with the mnemonic
   let wallet = await generateWallet({
     secretKey: mnemonic,
@@ -212,7 +230,7 @@ export async function getChildAccount(mnemonic: string, index: number) {
   // return address and key for selected index
   const address = getStxAddress({
     account: wallet.accounts[index],
-    transactionVersion: STACKS_TX_VERSION,
+    transactionVersion: TX_VERSION(network),
   });
   const key = wallet.accounts[index].stxPrivateKey;
   return { address, key };

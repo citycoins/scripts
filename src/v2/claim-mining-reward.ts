@@ -1,5 +1,12 @@
 import "cross-fetch/polyfill";
 import prompts from "prompts";
+import { uintCV } from "micro-stacks/clarity";
+import {
+  AnchorMode,
+  broadcastTransaction,
+  makeContractCall,
+  PostConditionMode,
+} from "micro-stacks/transactions";
 import {
   cancelPrompt,
   disclaimerIntro,
@@ -8,8 +15,7 @@ import {
   fromMicro,
   printAddress,
   printDivider,
-  setAddressConfig,
-  setUserConfig,
+  getUserConfig,
   sleep,
 } from "../../lib/utils";
 import {
@@ -17,19 +23,11 @@ import {
   getStacksBlockHeight,
   STACKS_NETWORK,
 } from "../../lib/stacks";
-import { validateStacksAddress } from "micro-stacks/crypto";
 import {
   canClaimMiningReward,
   getFullCityConfig,
   selectCityVersion,
 } from "../../lib/citycoins";
-import { uintCV } from "micro-stacks/clarity";
-import {
-  AnchorMode,
-  broadcastTransaction,
-  makeContractCall,
-  PostConditionMode,
-} from "micro-stacks/transactions";
 
 const DEFAULT_FEE = 50000; // 0.05 STX per TX
 
@@ -253,10 +251,8 @@ async function main() {
     true
   );
   // get network and citycoin selection
-  const userConfig = await setUserConfig();
+  const userConfig = await getUserConfig();
   console.log(JSON.stringify(userConfig, null, 2));
-  const addressConfig = await setAddressConfig(userConfig);
-  console.log(JSON.stringify(addressConfig, null, 2));
   /*
   const strategy = await setStrategy(config);
   await claimMiningRewards(config, strategy);
