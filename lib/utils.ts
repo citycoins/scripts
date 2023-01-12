@@ -1,6 +1,12 @@
 import fetch from "node-fetch";
+import prompts from "prompts";
 import throttledQueue from "throttled-queue";
-import { getStacksBlockHeight, getTotalMempoolTx } from "./stacks";
+import {
+  getChildAccount,
+  getChildAccounts,
+  getStacksBlockHeight,
+  getTotalMempoolTx,
+} from "./stacks";
 
 // debug settings for more verbose logging
 // TODO/IDEA: debugLog could accept a "level" integer
@@ -118,6 +124,87 @@ export async function waitUntilBlock(
   } while (block > currentBlock);
 
   return true;
+}
+
+// set user config used by all scripts
+export async function setUserConfig() {
+  printDivider();
+  console.log("SETTING USER CONFIGURATION");
+  printDivider();
+  // prompt for user config
+  const userConfig = await prompts(
+    [
+      {
+        type: "select",
+        name: "network",
+        message: "Select a network:",
+        choices: [
+          { title: "Mainnet", value: "mainnet" },
+          { title: "Testnet", value: "testnet" },
+        ],
+      },
+      {
+        type: "select",
+        name: "citycoin",
+        message: "Select a CityCoin to claim mining rewards:",
+        choices: [
+          { title: "MiamiCoin (MIA)", value: "MIA" },
+          { title: "NewYorkCityCoin (NYC)", value: "NYC" },
+        ],
+      },
+      {
+        type: "password",
+        name: "stxMnemonic",
+        message: "Seed phrase for Stacks address?",
+        validate: (value: string) =>
+          value === ""
+            ? "Stacks seed phrase is required to send a transaction"
+            : true,
+      },
+    ],
+    {
+      onCancel: (prompt: any) => cancelPrompt(prompt.name),
+    }
+  );
+  return userConfig;
+}
+
+export async function setAddressConfig(userConfig: any) {
+  printDivider();
+  console.log("SETTING ADDRESS CONFIGURATION");
+  printDivider();
+  // get first 4 addresses from mnemonic
+  const { addresses, keys } = await getChildAccounts(userConfig.stxMnemonic, 3);
+  const addressChoices = addresses.map((address: string, index: number) => {
+    return { title: address, value: index };
+  });
+  // add an option for specifying a higher index
+  addressChoices.push({ title: "Other...", value: -1 });
+  const addressConfig = await prompts([
+    {
+      type: "select",
+      name: "stxAccountIndex",
+      message: "Select an account listed below:",
+      choices: addressChoices,
+    },
+    {
+      type: (prev) => (prev === -1 ? "number" : null),
+      name: "stxAccountIndex",
+      message: "Enter the desired account index:",
+      validate: (value: number) =>
+        value < 0 ? "Account index must be greater than 0" : true,
+    },
+    // TODO: LEFT OFF HERE
+    {
+      type: "text",
+      name: "stxAddress",
+      message: "Please confirm the Stacks address:",
+      initial: async (prev) => {
+        return await getChildAccount(userConfig.stxMnemonic, prev);
+      },
+    },
+  ]);
+  return addressConfig;
 }
 
 // intro and disclaimer

@@ -174,17 +174,60 @@ export async function monitorTx(
   );
 }
 
-export async function deriveChildAccount(mnemonic: string, index: number) {
+// TODO: best approach for using wallet data temporarily
+const password = "StacksOnStacksOnStacks";
+
+export async function getChildAccounts(mnemonic: string, index: number) {
   // create a Stacks wallet with the mnemonic
   let wallet = await generateWallet({
     secretKey: mnemonic,
-    password: "StacksOnStacks", // TODO: best approach for using temporarily?
+    password: password,
   });
   // add a new account to reach the selected index
   for (let i = 0; i <= index; i++) {
     wallet = generateNewAccount(wallet);
   }
+  // return all addresses and keys
+  const addresses = wallet.accounts.map((account) => {
+    return getStxAddress({
+      account: account,
+      transactionVersion: STACKS_TX_VERSION,
+    });
+  });
+  const keys = wallet.accounts.map((account) => account.stxPrivateKey);
+  return { addresses, keys };
+}
 
+// TODO: use to replace deriveChildAccount() below in refactor
+export async function getChildAccount(mnemonic: string, index: number) {
+  // create a Stacks wallet with the mnemonic
+  let wallet = await generateWallet({
+    secretKey: mnemonic,
+    password: password,
+  });
+  // add a new account to reach the selected index
+  for (let i = 0; i <= index; i++) {
+    wallet = generateNewAccount(wallet);
+  }
+  // return address and key for selected index
+  const address = getStxAddress({
+    account: wallet.accounts[index],
+    transactionVersion: STACKS_TX_VERSION,
+  });
+  const key = wallet.accounts[index].stxPrivateKey;
+  return { address, key };
+}
+
+export async function deriveChildAccount(mnemonic: string, index: number) {
+  // create a Stacks wallet with the mnemonic
+  let wallet = await generateWallet({
+    secretKey: mnemonic,
+    password: password,
+  });
+  // add a new account to reach the selected index
+  for (let i = 0; i <= index; i++) {
+    wallet = generateNewAccount(wallet);
+  }
   // return address and key for selected index
   return {
     address: getStxAddress({
