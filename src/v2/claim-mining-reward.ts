@@ -102,7 +102,7 @@ async function claimMiningRewards(userConfig: any, scriptConfig: any) {
   console.log("SCANNING SELECTED BLOCKS");
   printDivider();
   // get current block height
-  const currentBlockHeight = await getStacksBlockHeight();
+  const currentBlockHeight = await getStacksBlockHeight(userConfig.network);
   // validate start/end block heights
   if (scriptConfig.startBlock > scriptConfig.endBlock) {
     exitError("Start block must be less than end block");
@@ -118,11 +118,12 @@ async function claimMiningRewards(userConfig: any, scriptConfig: any) {
   );
   // get info for transactions
   const { key } = await deriveChildAccount(
+    userConfig.network,
     userConfig.mnemonic,
     userConfig.accountIndex
   );
   const cityConfig = await getFullCityConfig(userConfig.citycoin.toLowerCase());
-  let nonce = await getNonce(userConfig.address);
+  let nonce = await getNonce(userConfig.network, userConfig.address);
   console.log(`nonce: ${nonce}`);
   // max tx in mempool at one time
   const claimLimit = 25;

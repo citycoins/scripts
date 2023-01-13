@@ -104,17 +104,18 @@ async function stackTokens(userConfig: any, scriptConfig: any) {
   console.log("BUILDING STACKING TRANSACTION");
   printDivider();
   // get current block height
-  const currentBlockHeight = await getStacksBlockHeight();
+  const currentBlockHeight = await getStacksBlockHeight(userConfig.network);
 
   // TODO: check that stacking is active
   // TODO: check if user has enough tokens to stack
 
   // get info for transactions
   const { key } = await deriveChildAccount(
+    userConfig.network,
     userConfig.mnemonic,
     userConfig.accountIndex
   );
-  let nonce = await getNonce(userConfig.address);
+  let nonce = await getNonce(userConfig.network, userConfig.address);
   console.log(`nonce: ${nonce}`);
   // get citycoin configuration
   const cityConfig = await getFullCityConfig(userConfig.citycoin.toLowerCase());
