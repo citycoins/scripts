@@ -71,8 +71,11 @@ async function setUserConfig() {
         type: "text",
         name: "stxAddress",
         message: "Confirm Stacks address from seed?",
-        initial: async (prev: string) => {
-          const { address, key } = await deriveChildAccount(prev, 1);
+        initial: async (prev: string, answers: any) => {
+          const { address } = await deriveChildAccount(
+            prev,
+            answers.accountIndex
+          );
           return address;
         },
         validate: (value: string) => {
