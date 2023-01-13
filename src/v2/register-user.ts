@@ -20,6 +20,8 @@ import {
   disclaimerIntro,
   exitError,
   exitSuccess,
+  fromMicro,
+  getUserConfig,
   printAddress,
   printDivider,
   sleep,
@@ -27,35 +29,19 @@ import {
 
 const DEFAULT_FEE = 1000000; // 1 STX per TX
 
-async function setUserConfig() {
+async function getScriptConfig() {
   printDivider();
-  console.log("SETTING CONFIGURATION");
+  console.log("SETTING SCRIPT CONFIGURATION");
   printDivider();
-  // prompt for user config
-  const userConfig = await prompts(
+
+  // prompt for script config
+  const scriptConfig = await prompts(
     [
-      {
-        type: "select",
-        name: "citycoin",
-        message: "Select a CityCoin to signal for activation:",
-        choices: [
-          { title: "MiamiCoin (MIA)", value: "MIA" },
-          { title: "NewYorkCityCoin (NYC)", value: "NYC" },
-        ],
-      },
-      {
-        type: "password",
-        name: "stxMnemonic",
-        message: "Seed phrase for Stacks address?",
-        validate: (value: string) =>
-          value === "" ? "Stacks seed phrase is required" : true,
-      },
       {
         type: "text",
         name: "memo",
         message: "Memo for registration?",
       },
-      /* TODO: custom fee handling
       {
         type: "toggle",
         name: "customFee",
@@ -66,47 +52,76 @@ async function setUserConfig() {
       },
       {
         type: (prev) => (prev ? "number" : null),
-        name: "customFeeValue",
+        name: "feeAmount",
         message: "Custom fee value in uSTX? (1,000,000 uSTX = 1 STX)",
         validate: (value) =>
           value > 0 ? true : "Value must be greater than 0",
       },
-      */
     ],
     { onCancel: (prompt: any) => cancelPrompt(prompt.name) }
   );
-  return userConfig;
+
+  // if custom fee, confirm fee amount
+  if (scriptConfig.customFee) {
+    const confirmFee = await prompts(
+      {
+        type: "toggle",
+        name: "confirm",
+        message: `Confirm custom tx fee? (${fromMicro(
+          scriptConfig.feeAmount
+        )} STX)`,
+        initial: false,
+        active: "Yes",
+        inactive: "No",
+      },
+      { onCancel: (prompt: any) => cancelPrompt(prompt.name) }
+    );
+    printDivider();
+    if (!confirmFee) exitError("Custom fee amount not confirmed, exiting...");
+  } else {
+    // else set default fee
+    scriptConfig.feeAmount = DEFAULT_FEE;
+  }
+
+  console.log(`feeAmount: ${fromMicro(scriptConfig.feeAmount)} STX`);
+
+  return scriptConfig;
 }
 
-async function registerUser(config: any) {
+async function registerUser(userConfig: any, scriptConfig: any) {
   printDivider();
-  console.log("REGISTERING USER");
+  console.log("BUILDING REGISTER USER TX");
   printDivider();
-  const { address, key } = await deriveChildAccount(config.stxMnemonic, 2); // target index
-  console.log(`address for key: ${address}`);
-  // printAddress(config.stxSender);
-  console.log(`memo: ${config.memo ? config.memo : "(none)"}`);
+  const { address, key } = await deriveChildAccount(
+    userConfig.network,
+    userConfig.mnemonic,
+    userConfig.accountIndex
+  );
+  printAddress(address);
+  console.log(`memo: ${scriptConfig.memo ? scriptConfig.memo : "(none)"}`);
   // TODO: check if contract activated (get-activation-status)
   // TODO: check if user already registered
   // get current block height
-  const currentBlockHeight = await getStacksBlockHeight();
+  const currentBlockHeight = await getStacksBlockHeight(userConfig.network);
   console.log(`currentBlockHeight: ${currentBlockHeight}`);
   // get info for transactions
-  const cityConfig = await getFullCityConfig(config.citycoin.toLowerCase());
-  let nonce = await getNonce(address);
+  const cityConfig = await getFullCityConfig(userConfig.citycoin.toLowerCase());
+  let nonce = await getNonce(userConfig.network, address);
   console.log(`nonce: ${nonce}`);
   printDivider();
   const version = await selectCityVersion(
-    config.citycoin.toLowerCase(),
+    userConfig.citycoin.toLowerCase(),
     currentBlockHeight
   );
   if (version === "")
-    exitError(`Error: no version found for ${config.citycoin}`);
+    exitError(`Error: no version found for ${userConfig.citycoin}`);
   const txOptions = {
     contractAddress: cityConfig[version].deployer,
     contractName: cityConfig[version].core.name,
     functionName: "register-user",
-    functionArgs: config.memo ? [stringUtf8CV(config.memo)] : [noneCV()],
+    functionArgs: scriptConfig.memo
+      ? [stringUtf8CV(scriptConfig.memo)]
+      : [noneCV()],
     senderKey: key,
     fee: DEFAULT_FEE,
     nonce: nonce,
@@ -115,34 +130,7 @@ async function registerUser(config: any) {
     network: STACKS_NETWORK,
     anchorMode: AnchorMode.Any,
   };
-  // TODO: refactor to new submitTx() format
-  try {
-    // create contract call and broadcast
-    const transaction = await makeContractCall(txOptions);
-    console.log("tx:");
-    console.log(
-      JSON.stringify(
-        transaction,
-        (key, value) =>
-          typeof value === "bigint" ? value.toString() + "n" : value,
-        2
-      )
-    );
-    const broadcastResult = await broadcastTransaction(
-      transaction,
-      STACKS_NETWORK
-    );
-    // check broadcast result after delay
-    await sleep(1000);
-    if ("error" in broadcastResult) {
-      console.log(`error: ${broadcastResult.reason}`);
-      console.log(`details:\n${JSON.stringify(broadcastResult.reason_data)}`);
-      exitError("Error broadcasting transaction, exiting...");
-    }
-    console.log(`link: https://explorer.stacks.co/txid/${transaction.txid()}`);
-  } catch (err) {
-    exitError(String(err));
-  }
+  await submitTx(txOptions, userConfig.network);
 }
 
 async function main() {
@@ -151,9 +139,9 @@ async function main() {
     "Builds and submits a register-user transaction for a given city.",
     true
   );
-  // TODO: refactor to getUserConfig() in utils
-  const config = await setUserConfig();
-  await registerUser(config);
+  const userConfig = getUserConfig();
+  const scriptConfig = getScriptConfig();
+  await registerUser(userConfig, scriptConfig);
   printDivider();
   exitSuccess("all actions complete, script exiting...");
 }
