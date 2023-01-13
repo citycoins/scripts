@@ -178,9 +178,9 @@ export async function getUserConfig(keyRequired = true) {
 
   // confirm selected address
   const { address } = await getChildAccount(
+    userConfig.network,
     userConfig.mnemonic,
-    addressConfig.index,
-    userConfig.network
+    addressConfig.index
   );
   const addressConfirm = await prompts(
     [
@@ -188,7 +188,7 @@ export async function getUserConfig(keyRequired = true) {
         type: "toggle",
         name: "value",
         message: `Confirm address: ${address}`,
-        initial: true,
+        initial: false,
         active: "Yes",
         inactive: "No",
       },
@@ -210,6 +210,7 @@ export async function getUserConfig(keyRequired = true) {
 // wait for Stacks block height before continuing
 // TODO: move to stacks.ts?
 export async function waitUntilBlock(
+  network: string,
   block: number,
   address: string
 ): Promise<boolean> {
@@ -243,7 +244,9 @@ export async function waitUntilBlock(
     printTimeStamp();
     printAddress(address);
     // get current block
-    currentBlock = await getStacksBlockHeight().catch((err) => exitError(err));
+    currentBlock = await getStacksBlockHeight(network).catch((err) =>
+      exitError(err)
+    );
     console.log(`currentBlock: ${currentBlock}`);
     console.log(`targetBlock: ${block}`);
     // show distance and time
@@ -255,7 +258,9 @@ export async function waitUntilBlock(
         : console.log(`time: ${(remainingTime * 60).toFixed()} minutes`);
     }
     // show mempool tx count
-    const mempoolTx = await getTotalMempoolTx().catch((err) => exitError(err));
+    const mempoolTx = await getTotalMempoolTx(network).catch((err) =>
+      exitError(err)
+    );
     console.log(`mempoolTx: ${mempoolTx}`);
   } while (block > currentBlock);
 

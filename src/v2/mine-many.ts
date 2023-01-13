@@ -1,12 +1,9 @@
 import "cross-fetch/polyfill";
 import prompts from "prompts";
 import { listCV, UIntCV, uintCV } from "micro-stacks/clarity";
-import { validateStacksAddress } from "micro-stacks/crypto";
 import {
   AnchorMode,
-  broadcastTransaction,
   FungibleConditionCode,
-  makeContractCall,
   makeStandardSTXPostCondition,
   PostConditionMode,
 } from "micro-stacks/transactions";
@@ -15,9 +12,9 @@ import {
   disclaimerIntro,
   exitError,
   exitSuccess,
-  fixBigInt,
   fromMicro,
   getUserConfig,
+  printAddress,
   printDivider,
   sleep,
   waitUntilBlock,
@@ -30,147 +27,23 @@ import {
   getStacksBlockHeight,
   monitorTx,
   STACKS_NETWORK,
+  submitTx,
 } from "../../lib/stacks";
 import {
+  CityConfig,
   getFullCityConfig,
   getMiningStatsAtBlock,
   selectCityVersion,
 } from "../../lib/citycoins";
+import { network } from "blockstack";
 
-async function setUserConfig() {
-  printDivider();
-  console.log("SETTING CONFIGURATION");
-  printDivider();
-  const currentBlockHeight = await getStacksBlockHeight();
-  // prompt for user config
-  const userConfig: any = await prompts(
-    [
-      {
-        type: "select",
-        name: "citycoin",
-        message: "Select a CityCoin to mine:",
-        choices: [
-          { title: "MiamiCoin (MIA)", value: "MIA" },
-          { title: "NewYorkCityCoin (NYC)", value: "NYC" },
-        ],
-      },
-      {
-        type: "number",
-        name: "accountIndex",
-        message: "Account index for Stacks address?",
-        validate: (value) =>
-          value < 0 ? "Account index must be greater than 0" : true,
-      },
-      {
-        type: "password",
-        name: "stxMnemonic",
-        message: "Seed phrase for Stacks address?",
-        validate: (value: string) =>
-          value === "" ? "Stacks seed phrase is required" : true,
-      },
-      {
-        type: "text",
-        name: "stxAddress",
-        message: "Confirm Stacks address from seed?",
-        initial: async (prev: string, answers: any) => {
-          const { address } = await deriveChildAccount(
-            prev,
-            answers.accountIndex
-          );
-          return address;
-        },
-        validate: (value: string) => {
-          if (value === "") {
-            return "Stacks address is required";
-          }
-          if (!validateStacksAddress(value)) {
-            return "Invalid Stacks address";
-          }
-          return true;
-        },
-      },
-      {
-        type: "toggle",
-        name: "continuousMining",
-        message: "Continuously mine with full STX balance?",
-        initial: false,
-        active: "Yes",
-        inactive: "No",
-      },
-      {
-        type: (prev) => (prev ? null : "number"),
-        name: "numberOfRuns",
-        message: "Number of mining TX to send?",
-        validate: (value) =>
-          value < 1 ? "Value must be greater than 0" : true,
-      },
-      {
-        type: "number",
-        name: "numberOfBlocks",
-        message: "Number of blocks to mine per TX? (1-200)",
-        validate: (value) =>
-          value < 1 || value > 200 ? "Value must be between 1 and 200" : true,
-      },
-      {
-        type: "toggle",
-        name: "startNow",
-        message: "Start mining now?",
-        initial: true,
-        active: "Yes",
-        inactive: "No",
-      },
-      {
-        type: (prev) => (prev ? null : "number"),
-        name: "targetBlockHeight",
-        message: `Target block height? (current: ${currentBlockHeight})`,
-        validate: (value) =>
-          value < currentBlockHeight
-            ? `Value must be equal to or greater than current block height: ${currentBlockHeight}`
-            : true,
-      },
-      {
-        type: "toggle",
-        name: "customCommit",
-        message: "Set custom commit per block?",
-        initial: false,
-        active: "Yes",
-        inactive: "No",
-      },
-      {
-        type: (prev) => (prev ? "number" : null),
-        name: "customCommitValue",
-        message: "Custom block commit value in uSTX? (1,000,000 uSTX = 1 STX)",
-        validate: (value) =>
-          value > 0 ? true : "Value must be greater than 0",
-      },
-      {
-        type: "toggle",
-        name: "customFee",
-        message: `Set custom fee per TX?`,
-        initial: false,
-        active: "Yes",
-        inactive: "No",
-      },
-      {
-        type: (prev) => (prev ? "number" : null),
-        name: "customFeeValue",
-        message: "Custom fee value in uSTX? (1,000,000 uSTX = 1 STX)",
-        validate: (value) =>
-          value > 0 ? true : "Value must be greater than 0",
-      },
-    ],
-    {
-      onCancel: (prompt: any) => cancelPrompt(prompt.name),
-    }
-  );
-  return userConfig;
-}
+let currentBlockHeight = 0;
 
-async function getScriptConfig() {
+async function getScriptConfig(network: string) {
   printDivider();
   console.log("SETTING SCRIPT CONFIGURATION");
   printDivider();
-  const currentBlockHeight = await getStacksBlockHeight();
+  currentBlockHeight = await getStacksBlockHeight(network);
   // prompt for script configuration
   const scriptConfig = await prompts(
     [
@@ -248,24 +121,27 @@ async function getScriptConfig() {
       onCancel: (prompt: any) => cancelPrompt(prompt.name),
     }
   );
+  return scriptConfig;
 }
 
 // TODO: break this up into smaller functions
-async function setStrategy(userConfig: any) {
+async function setMiningStrategy(
+  userConfig: any,
+  scriptConfig: any,
+  cityConfig: CityConfig
+) {
   printDivider();
   console.log("CALCULATING FEE AMOUNT");
   printDivider();
 
-  let feeAmount = 0;
-
   // if custom fee, confirm fee amount
-  if (userConfig.customFee) {
+  if (scriptConfig.customFee) {
     const confirmFee = await prompts(
       {
         type: "toggle",
         name: "confirm",
         message: `Confirm custom tx fee? (${fromMicro(
-          userConfig.feeAmount
+          scriptConfig.feeAmount
         )} STX)`,
         initial: false,
         active: "Yes",
@@ -273,7 +149,6 @@ async function setStrategy(userConfig: any) {
       },
       { onCancel: (prompt: any) => cancelPrompt(prompt.name) }
     );
-    printDivider();
     if (!confirmFee) exitError("Custom fee amount not confirmed, exiting...");
   } else {
     // else get strategy info to set fee amount
@@ -289,24 +164,24 @@ async function setStrategy(userConfig: any) {
     );
     printDivider();
     // set fee amount based on strategy
-    userConfig.feeAmount = await getOptimalFee(feeMultiplier.value);
+    scriptConfig.feeAmount = await getOptimalFee(
+      userConfig.network,
+      feeMultiplier.value
+    );
   }
-  console.log(`feeAmount: ${fromMicro(userConfig.feeAmount)} STX`);
 
   printDivider();
   console.log("CALCULATING COMMIT AMOUNT");
   printDivider();
 
-  let commitAmount = 0;
-
   // if custom commit, confirm commit amount
-  if (userConfig.customCommit) {
+  if (scriptConfig.customCommit) {
     const confirmCommit = await prompts(
       {
         type: "toggle",
         name: "confirm",
         message: `Confirm custom commit per block? (${fromMicro(
-          userConfig.commitAmount
+          scriptConfig.commitAmount
         )} STX)`,
         initial: false,
         active: "Yes",
@@ -314,7 +189,6 @@ async function setStrategy(userConfig: any) {
       },
       { onCancel: (prompt: any) => cancelPrompt(prompt.name) }
     );
-    printDivider();
     if (!confirmCommit)
       exitError("Custom commit amount not confirmed, exiting...");
   } else {
@@ -370,54 +244,60 @@ async function setStrategy(userConfig: any) {
     if (!confirmMax.value)
       exitError("ERROR: max commit not confirmed, exiting...");
     // set commit value based on strategy
-    // TODO: might need scriptConfig here too
-    userConfig.commitAmount = await getBlockCommit(userConfig, commitStrategy);
+    scriptConfig.commitAmount = await getBlockCommit(
+      userConfig.network,
+      cityConfig,
+      commitStrategy
+    );
     // check that commit doesn't exceed max commit
-    if (userConfig.commitAmount > commitStrategy.maxCommitBlock) {
-      console.log(`autoCommit: ${fromMicro(userConfig.commitAmount)} STX`);
+    if (scriptConfig.commitAmount > commitStrategy.maxCommitBlock) {
+      console.log(`autoCommit: ${fromMicro(scriptConfig.commitAmount)} STX`);
       console.log("auto commit > max commit, using max commit...");
-      userConfig.commitAmount = commitStrategy.maxCommitBlock;
+      scriptConfig.commitAmount = commitStrategy.maxCommitBlock;
     }
   }
-  console.log(`commitAmount: ${fromMicro(userConfig.commitAmount)} STX`);
 
   // check that commit with fee doesn't exceed balance
-  const balances = await getStacksBalances(userConfig.address);
+  const balances = await getStacksBalances(
+    userConfig.network,
+    userConfig.address
+  );
   const stxBalance = balances.stx.balance;
-  if (userConfig.commitAmount + userConfig.feeAmount > stxBalance) {
+  if (scriptConfig.commitAmount + scriptConfig.feeAmount > stxBalance) {
     console.log("commit + fee > balance, recalculating...");
-    commitAmount = (stxBalance - feeAmount) / scriptConfig.numberOfBlocks;
+    scriptConfig.commitAmount =
+      (stxBalance - scriptConfig.feeAmount) / scriptConfig.numberOfBlocks;
   }
 
   // summarize TX info
   printDivider();
   console.log("TX INFORMATION");
   printDivider();
+  printAddress(userConfig.address);
   console.log(`balance: ${fromMicro(stxBalance)} STX`);
-  console.log(`commitAmount: ${fromMicro(commitAmount)} STX`);
+  console.log(`commitAmount: ${fromMicro(scriptConfig.commitAmount)} STX`);
+  console.log(`numberOfBlocks: ${scriptConfig.numberOfBlocks}`);
   console.log(
-    `commitTotal: ${fromMicro(commitAmount * config.numberOfBlocks)}`
+    `commitTotal: ${fromMicro(
+      scriptConfig.commitAmount * scriptConfig.numberOfBlocks
+    )} STX`
   );
-  console.log(`feeAmount: ${fromMicro(feeAmount)} STX`);
-
-  const strategy = {
-    commitAmount: commitAmount,
-    feeAmount: feeAmount,
-    commitTotal: commitAmount * config.numberOfBlocks,
-  };
-
-  return strategy;
+  console.log(`feeAmount: ${fromMicro(scriptConfig.feeAmount)} STX`);
 }
 
-async function getBlockCommit(userConfig: any, commitStrategy: any) {
-  const currentBlockHeight = await getStacksBlockHeight();
+async function getBlockCommit(
+  network: string,
+  cityConfig: CityConfig,
+  commitStrategy: any
+) {
+  currentBlockHeight = await getStacksBlockHeight(network);
   console.log(`currentBlockHeight: ${currentBlockHeight}`);
   console.log(`strategyDistance: ${commitStrategy.strategyDistance}`);
   // get historical average commit for selected distance
   const avgPast = await getBlockCommitAvg(
     -1,
     currentBlockHeight,
-    userConfig,
+    cityConfig.token.symbol,
     commitStrategy
   );
   console.log(`avgPast: ${fromMicro(avgPast)} STX`);
@@ -428,7 +308,7 @@ async function getBlockCommit(userConfig: any, commitStrategy: any) {
   const avgFuture = await getBlockCommitAvg(
     1,
     currentBlockHeight,
-    userConfig,
+    cityConfig.token.symbol,
     commitStrategy
   );
   console.log(`avgFuture: ${fromMicro(avgFuture)} STX`);
@@ -442,7 +322,7 @@ async function getBlockCommit(userConfig: any, commitStrategy: any) {
 async function getBlockCommitAvg(
   direction: number,
   currentBlock: number,
-  userConfig: any,
+  tokenSymbol: string,
   commitStrategy: any
 ): Promise<number> {
   const targetBlock =
@@ -454,12 +334,7 @@ async function getBlockCommitAvg(
     direction > 0 ? i < targetBlock : i > targetBlock;
     direction > 0 ? i++ : i--
   ) {
-    const result = await getMiningStatsAtBlock(
-      "v2",
-      userConfig.tokenSymbol,
-      i,
-      true
-    );
+    const result = await getMiningStatsAtBlock("v2", tokenSymbol, i, true);
     blockStats.push(+result.amount);
     // avoid API rate limiting
     await sleep(1000);
@@ -471,95 +346,88 @@ async function getBlockCommitAvg(
   return avg;
 }
 
-async function mineManyTestnet(config: any, strategy: any): Promise<any> {
+async function mineManyTestnet(
+  userConfig: any,
+  scriptConfig: any,
+  cityConfig: CityConfig
+): Promise<any> {
   // get account address and private key
   const { address, key } = await deriveChildAccount(
-    config.stxMnemonic,
-    config.accountIndex
+    userConfig.network,
+    userConfig.mnemonic,
+    userConfig.accountIndex
   );
   // loop until target block is reached
-  await waitUntilBlock(config.targetBlockHeight, address);
+  await waitUntilBlock(
+    userConfig.network,
+    scriptConfig.targetBlockHeight,
+    address
+  );
   printDivider();
   console.log("SENDING MINING TX");
   printDivider();
   // create the clarity values
   const mineManyArray: UIntCV[] = [];
-  for (let i = 0; i < config.numberOfBlocks; i++) {
-    mineManyArray.push(uintCV(parseInt(strategy.commitAmount)));
+  for (let i = 0; i < scriptConfig.numberOfBlocks; i++) {
+    mineManyArray.push(uintCV(parseInt(scriptConfig.commitAmount)));
   }
   const mineManyArrayCV = listCV(mineManyArray);
   // get nonce
-  const nonce = await getNonce(address);
-  // print tx info\
+  const nonce = await getNonce(userConfig.network, address);
+  // print tx info
   console.log(`address for key: ${address}`);
   console.log(`nonce: ${nonce}`);
-  console.log(`commitAmount: ${fromMicro(strategy.commitAmount)} STX`);
-  console.log(`numberOfBlocks: ${config.numberOfBlocks}`);
-  console.log(`commitTotal: ${fromMicro(strategy.commitTotal)} STX`);
-  console.log(`feeAmount: ${fromMicro(strategy.feeAmount)} STX`);
+  console.log(`commitAmount: ${fromMicro(scriptConfig.commitAmount)} STX`);
+  console.log(`numberOfBlocks: ${scriptConfig.numberOfBlocks}`);
+  console.log(`commitTotal: ${fromMicro(scriptConfig.commitTotal)} STX`);
+  console.log(`feeAmount: ${fromMicro(scriptConfig.feeAmount)} STX`);
   // create the mining tx
-  const currentBlockHeight = await getStacksBlockHeight();
-  const cityConfig = await getFullCityConfig(config.citycoin.toLowerCase());
-  const version = await selectCityVersion(
-    config.citycoin.toLowerCase(),
-    currentBlockHeight
-  );
   const txOptions = {
-    contractAddress: cityConfig[version].deployer,
-    contractName: cityConfig[version].core.name,
+    contractAddress: cityConfig.deployer,
+    contractName: cityConfig.core.name,
     functionName: "mine-many",
     functionArgs: [mineManyArrayCV],
     senderKey: key,
-    fee: parseInt(strategy.feeAmount),
+    fee: parseInt(scriptConfig.feeAmount),
     nonce: nonce,
     postConditionMode: PostConditionMode.Deny,
     postConditions: [
       makeStandardSTXPostCondition(
         address,
         FungibleConditionCode.Equal,
-        parseInt(strategy.commitTotal)
+        parseInt(scriptConfig.commitTotal)
       ),
     ],
     network: STACKS_NETWORK,
     anchorMode: AnchorMode.Any,
   };
-  // pause 10sec
+  // pause 15sec to allow checking data manually
   console.log("pausing 15sec before submit...");
   await sleep(15000);
-  // TODO: refactor to new submitTx() format
-  // submit tx
-  try {
-    console.log(`txOptions:\n${JSON.stringify(txOptions, fixBigInt, 2)}`);
-    const transaction = await makeContractCall(txOptions);
-    console.log(`transaction:\n${JSON.stringify(transaction, fixBigInt, 2)}`);
-    const broadcastResult = await broadcastTransaction(
-      transaction,
-      STACKS_NETWORK
-    );
-    if (!broadcastResult) exitError("why is this broken?");
-    console.log(
-      `broadcast result: ${JSON.stringify(broadcastResult, fixBigInt, 2)})}`
-    );
+  const txResult = await submitTx(txOptions, userConfig.network);
+  if (txResult !== undefined) {
+    // pause 15sec to allow tx propagation to nodes
     console.log("pausing 15sec after submit...");
     await sleep(15000);
-    // setup and wait for next transaction
-    const nextTarget = await monitorTx(broadcastResult, transaction.txid());
-    if (config.continuousMining || config.numberOfRuns > 0) {
-      config.numberOfRuns -= 1;
-      config.targetBlockHeight = nextTarget + config.numberOfBlocks;
+    const nextTarget = await monitorTx(userConfig.network, txResult);
+    if (scriptConfig.continuousMining || scriptConfig.numberOfRuns > 0) {
+      scriptConfig.numberOfRuns -= 1;
+      scriptConfig.targetBlockHeight = nextTarget + scriptConfig.numberOfBlocks;
       printDivider();
       console.log("RESTARTING WITH NEW TARGET");
       printDivider();
-      console.log(`nextTarget: ${config.targetBlockHeight}`);
+      console.log(`nextTarget: ${scriptConfig.targetBlockHeight}`);
       console.log(
         `remainingTxs: ${
-          config.continousMining ? "until balance spent" : config.numberOfRuns
+          scriptConfig.continousMining
+            ? "until balance spent"
+            : scriptConfig.numberOfRuns
         }`
       );
-      return await mineManyTestnet(config, strategy);
+      return await mineManyTestnet(userConfig, scriptConfig, cityConfig);
+    } else {
+      exitError("Error broadcasting transaction, result undefined, exiting...");
     }
-  } catch (err) {
-    exitError(String(err));
   }
 }
 
@@ -569,10 +437,18 @@ async function main() {
     "Builds and submits mine-many transactions for CityCoins on Stacks with advanced options including continuous mining and automatic commit/fee calculations.",
     true
   );
-  const userConfig = getUserConfig();
-  const scriptConfig = getScriptConfig();
-  const miningStrategy = await setStrategy(userConfig);
-  await mineManyTestnet(userConfig, scriptConfig, miningStrategy);
+  console.log(`WARNING: commit amounts must be set manually for now`);
+  const userConfig = await getUserConfig();
+  const scriptConfig = await getScriptConfig(userConfig.network);
+  const cityConfig = await getFullCityConfig(userConfig.citycoin.toLowerCase());
+  const version = await selectCityVersion(
+    userConfig.citycoin.toLowerCase(),
+    currentBlockHeight
+  );
+  if (version === "")
+    exitError(`Error: no version found for ${userConfig.citycoin}`);
+  await setMiningStrategy(userConfig, scriptConfig, cityConfig[version]);
+  await mineManyTestnet(userConfig, scriptConfig, cityConfig[version]);
   printDivider();
   exitSuccess("all actions complete, script exiting...");
 }

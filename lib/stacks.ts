@@ -67,8 +67,8 @@ const TX_VERSION = (network: string) => {
 };
 
 // get current Stacks block height
-export async function getStacksBlockHeight(): Promise<number> {
-  const url = `${STACKS_NETWORK.getCoreApiUrl()}/v2/info`;
+export async function getStacksBlockHeight(network: string): Promise<number> {
+  const url = `${NETWORK(network).getCoreApiUrl()}/v2/info`;
   const currentBlockResult = await fetchJson(url);
   const currentBlock = +currentBlockResult.stacks_tip_height;
   debugLog(`currentBlock: ${currentBlock}`);
@@ -77,31 +77,45 @@ export async function getStacksBlockHeight(): Promise<number> {
 
 // get current nonce for account
 // https://stacks-node-api.mainnet.stacks.co/extended/v1/address/{principal}/nonces
-export async function getNonce(address: string): Promise<number> {
-  const url = `${STACKS_NETWORK.getCoreApiUrl()}/extended/v1/address/${address}/nonces`;
+export async function getNonce(
+  network: string,
+  address: string
+): Promise<number> {
+  const url = `${NETWORK(
+    network
+  ).getCoreApiUrl()}/extended/v1/address/${address}/nonces`;
   const nonceResult = await fetchJson(url);
   const nonce = +nonceResult.possible_next_nonce;
   return nonce;
 }
 
 // get the total number of transactions in the Stacks mempool
-export async function getTotalMempoolTx(): Promise<number> {
-  const url = `${STACKS_NETWORK.getCoreApiUrl()}/extended/v1/tx/mempool`;
+export async function getTotalMempoolTx(network: string): Promise<number> {
+  const url = `${NETWORK(network).getCoreApiUrl()}/extended/v1/tx/mempool`;
   const mempoolResult = await fetchJson(url);
   const totalTx = +mempoolResult.total;
   return totalTx;
 }
 
 // get account balances for a given address
-export async function getStacksBalances(address: string): Promise<any> {
-  const url = `${STACKS_NETWORK.getCoreApiUrl()}/extended/v1/address/${address}/balances`;
+export async function getStacksBalances(
+  network: string,
+  address: string
+): Promise<any> {
+  const url = `${NETWORK(
+    network
+  ).getCoreApiUrl()}/extended/v1/address/${address}/balances`;
   const balanceResult = await fetchJson(url);
   return balanceResult;
 }
 
 // get optimal fee for transactions
 // based on average of current fees in mempool
-export async function getOptimalFee(multiplier: number, checkAllTx = false) {
+export async function getOptimalFee(
+  network: string,
+  multiplier: number,
+  checkAllTx = false
+) {
   let counter = 0;
   let total = 0;
   let limit = 200;
@@ -110,7 +124,9 @@ export async function getOptimalFee(multiplier: number, checkAllTx = false) {
 
   // query the stacks-node for multiple transactions
   do {
-    url = `${STACKS_NETWORK.getCoreApiUrl()}/extended/v1/tx/mempool?limit=${limit}&offset=${counter}&unanchored=true`;
+    url = `${NETWORK(
+      network
+    ).getCoreApiUrl()}/extended/v1/tx/mempool?limit=${limit}&offset=${counter}&unanchored=true`;
     const result = await fetchJson(url);
     // get total number of tx
     total = checkAllTx ? result.total : result.results.length;
@@ -124,6 +140,15 @@ export async function getOptimalFee(multiplier: number, checkAllTx = false) {
   } while (counter < total);
 
   const fees = txResults.map((fee: any) => +fee.fee_rate);
+
+  if (fees.length === 0) {
+    console.log(
+      `Unable to get fees in mempool, using default: ${fromMicro(
+        DEFAULT_FEE
+      )} STX.`
+    );
+    return DEFAULT_FEE;
+  }
 
   const max = fees.reduce((a: number, b: number) => {
     return a > b ? a : b;
@@ -150,12 +175,14 @@ export async function getOptimalFee(multiplier: number, checkAllTx = false) {
 // monitor a transaction in pending status
 // until confirmed or rejected
 export async function monitorTx(
-  broadcastedResult: TxBroadcastResult,
-  txId: string
+  network: string,
+  broadcastedResult: TxBroadcastResult
 ) {
   let count = 0;
   const countLimit = 50;
-  const url = `${STACKS_NETWORK.coreApiUrl}/extended/v1/tx/${txId}`;
+  const url = `${NETWORK(network).coreApiUrl}/extended/v1/tx/${
+    broadcastedResult.txid
+  }`;
 
   do {
     const txResult = await fetchJson(url);
@@ -170,7 +197,9 @@ export async function monitorTx(
     );
     printDivider();
     printTimeStamp();
-    console.log(`https://explorer.stacks.co/txid/${txResult.tx_id}`);
+    console.log(
+      `https://explorer.stacks.co/txid/${txResult.tx_id}?chain=${network}`
+    );
     console.log(`attempt ${count + 1} of ${countLimit}`);
 
     if ("error" in broadcastedResult) {
@@ -218,6 +247,7 @@ export async function submitTx(txOptions: any, network: string) {
     console.log(
       `link: https://explorer.stacks.co/txid/${transaction.txid()}?chain=${network}`
     );
+    return broadcastResult;
   } catch (err) {
     exitError(
       `${String(err)}\nGeneric error broadcasting transaction, exiting...`
@@ -255,9 +285,9 @@ export async function getChildAccounts(
 
 // TODO: use to replace deriveChildAccount() below in refactor
 export async function getChildAccount(
+  network: string,
   mnemonic: string,
-  index: number,
-  network: string
+  index: number
 ) {
   // create a Stacks wallet with the mnemonic
   let wallet = await generateWallet({
@@ -277,7 +307,11 @@ export async function getChildAccount(
   return { address, key };
 }
 
-export async function deriveChildAccount(mnemonic: string, index: number) {
+export async function deriveChildAccount(
+  network: string,
+  mnemonic: string,
+  index: number
+) {
   // create a Stacks wallet with the mnemonic
   let wallet = await generateWallet({
     secretKey: mnemonic,
@@ -291,7 +325,7 @@ export async function deriveChildAccount(mnemonic: string, index: number) {
   return {
     address: getStxAddress({
       account: wallet.accounts[index],
-      transactionVersion: STACKS_TX_VERSION,
+      transactionVersion: TX_VERSION(network),
     }),
     key: wallet.accounts[index].stxPrivateKey,
   };
