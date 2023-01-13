@@ -1,12 +1,7 @@
 import "cross-fetch/polyfill";
 import prompts from "prompts";
 import { uintCV } from "micro-stacks/clarity";
-import {
-  AnchorMode,
-  broadcastTransaction,
-  makeContractCall,
-  PostConditionMode,
-} from "micro-stacks/transactions";
+import { AnchorMode, PostConditionMode } from "micro-stacks/transactions";
 import {
   cancelPrompt,
   disclaimerIntro,

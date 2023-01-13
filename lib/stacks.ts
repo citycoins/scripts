@@ -9,7 +9,6 @@ import {
   debugLog,
   exitError,
   fetchJson,
-  fixBigInt,
   fromMicro,
   printDivider,
   printTimeStamp,

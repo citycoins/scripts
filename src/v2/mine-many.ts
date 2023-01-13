@@ -17,6 +17,7 @@ import {
   exitSuccess,
   fixBigInt,
   fromMicro,
+  getUserConfig,
   printDivider,
   sleep,
   waitUntilBlock,
@@ -165,7 +166,92 @@ async function setUserConfig() {
   return userConfig;
 }
 
-async function setStrategy(config: any) {
+async function getScriptConfig() {
+  printDivider();
+  console.log("SETTING SCRIPT CONFIGURATION");
+  printDivider();
+  const currentBlockHeight = await getStacksBlockHeight();
+  // prompt for script configuration
+  const scriptConfig = await prompts(
+    [
+      {
+        type: "toggle",
+        name: "continuousMining",
+        message: "Continuously mine with full STX balance?",
+        initial: false,
+        active: "Yes",
+        inactive: "No",
+      },
+      {
+        type: (prev) => (prev ? null : "number"),
+        name: "numberOfRuns",
+        message: "Number of mining TX to send?",
+        validate: (value) =>
+          value < 1 ? "Value must be greater than 0" : true,
+      },
+      {
+        type: "number",
+        name: "numberOfBlocks",
+        message: "Number of blocks to mine per TX? (1-200)",
+        validate: (value) =>
+          value < 1 || value > 200 ? "Value must be between 1 and 200" : true,
+      },
+      {
+        type: "toggle",
+        name: "startNow",
+        message: "Start mining now?",
+        initial: true,
+        active: "Yes",
+        inactive: "No",
+      },
+      {
+        type: (prev) => (prev ? null : "number"),
+        name: "targetBlockHeight",
+        message: `Target block height? (current: ${currentBlockHeight})`,
+        validate: (value) =>
+          value < currentBlockHeight
+            ? `Value must be equal to or greater than current block height: ${currentBlockHeight}`
+            : true,
+      },
+      {
+        type: "toggle",
+        name: "customCommit",
+        message: "Set custom commit per block?",
+        initial: false,
+        active: "Yes",
+        inactive: "No",
+      },
+      {
+        type: (prev) => (prev ? "number" : null),
+        name: "commitAmount",
+        message: "Custom block commit value in uSTX? (1,000,000 uSTX = 1 STX)",
+        validate: (value) =>
+          value > 0 ? true : "Value must be greater than 0",
+      },
+      {
+        type: "toggle",
+        name: "customFee",
+        message: `Set custom fee per TX?`,
+        initial: false,
+        active: "Yes",
+        inactive: "No",
+      },
+      {
+        type: (prev) => (prev ? "number" : null),
+        name: "feeAmount",
+        message: "Custom fee value in uSTX? (1,000,000 uSTX = 1 STX)",
+        validate: (value) =>
+          value > 0 ? true : "Value must be greater than 0",
+      },
+    ],
+    {
+      onCancel: (prompt: any) => cancelPrompt(prompt.name),
+    }
+  );
+}
+
+// TODO: break this up into smaller functions
+async function setStrategy(userConfig: any) {
   printDivider();
   console.log("CALCULATING FEE AMOUNT");
   printDivider();
@@ -173,13 +259,13 @@ async function setStrategy(config: any) {
   let feeAmount = 0;
 
   // if custom fee, confirm fee amount
-  if (config.customFee) {
+  if (userConfig.customFee) {
     const confirmFee = await prompts(
       {
         type: "toggle",
         name: "confirm",
         message: `Confirm custom tx fee? (${fromMicro(
-          config.customFeeValue
+          userConfig.feeAmount
         )} STX)`,
         initial: false,
         active: "Yes",
@@ -189,7 +275,6 @@ async function setStrategy(config: any) {
     );
     printDivider();
     if (!confirmFee) exitError("Custom fee amount not confirmed, exiting...");
-    feeAmount = config.customFeeValue;
   } else {
     // else get strategy info to set fee amount
     const feeMultiplier = await prompts(
@@ -204,9 +289,9 @@ async function setStrategy(config: any) {
     );
     printDivider();
     // set fee amount based on strategy
-    feeAmount = await getOptimalFee(feeMultiplier.value);
+    userConfig.feeAmount = await getOptimalFee(feeMultiplier.value);
   }
-  console.log(`feeAmount: ${fromMicro(feeAmount)} STX`);
+  console.log(`feeAmount: ${fromMicro(userConfig.feeAmount)} STX`);
 
   printDivider();
   console.log("CALCULATING COMMIT AMOUNT");
@@ -215,13 +300,13 @@ async function setStrategy(config: any) {
   let commitAmount = 0;
 
   // if custom commit, confirm commit amount
-  if (config.customCommit) {
+  if (userConfig.customCommit) {
     const confirmCommit = await prompts(
       {
         type: "toggle",
         name: "confirm",
         message: `Confirm custom commit per block? (${fromMicro(
-          config.customCommitValue
+          userConfig.commitAmount
         )} STX)`,
         initial: false,
         active: "Yes",
@@ -232,7 +317,6 @@ async function setStrategy(config: any) {
     printDivider();
     if (!confirmCommit)
       exitError("Custom commit amount not confirmed, exiting...");
-    commitAmount = config.customCommitValue;
   } else {
     // else get strategy info to set commit amount
     const commitStrategy = await prompts(
@@ -286,22 +370,23 @@ async function setStrategy(config: any) {
     if (!confirmMax.value)
       exitError("ERROR: max commit not confirmed, exiting...");
     // set commit value based on strategy
-    commitAmount = await getBlockCommit(config, commitStrategy);
+    // TODO: might need scriptConfig here too
+    userConfig.commitAmount = await getBlockCommit(userConfig, commitStrategy);
     // check that commit doesn't exceed max commit
-    if (commitAmount > commitStrategy.maxCommitBlock) {
-      console.log(`autoCommit: ${fromMicro(commitAmount)} STX`);
+    if (userConfig.commitAmount > commitStrategy.maxCommitBlock) {
+      console.log(`autoCommit: ${fromMicro(userConfig.commitAmount)} STX`);
       console.log("auto commit > max commit, using max commit...");
-      commitAmount = commitStrategy.maxCommitBlock;
+      userConfig.commitAmount = commitStrategy.maxCommitBlock;
     }
   }
-  console.log(`commitAmount: ${fromMicro(commitAmount)} STX`);
+  console.log(`commitAmount: ${fromMicro(userConfig.commitAmount)} STX`);
 
   // check that commit with fee doesn't exceed balance
-  const balances = await getStacksBalances(config.stxAddress);
+  const balances = await getStacksBalances(userConfig.address);
   const stxBalance = balances.stx.balance;
-  if (commitAmount + feeAmount > stxBalance) {
+  if (userConfig.commitAmount + userConfig.feeAmount > stxBalance) {
     console.log("commit + fee > balance, recalculating...");
-    commitAmount = (stxBalance - feeAmount) / config.numberOfBlocks;
+    commitAmount = (stxBalance - feeAmount) / scriptConfig.numberOfBlocks;
   }
 
   // summarize TX info
@@ -484,10 +569,10 @@ async function main() {
     "Builds and submits mine-many transactions for CityCoins on Stacks with advanced options including continuous mining and automatic commit/fee calculations.",
     true
   );
-  // TODO: refactor to getUserConfig() in utils
-  const config = await setUserConfig();
-  const strategy = await setStrategy(config);
-  await mineManyTestnet(config, strategy);
+  const userConfig = getUserConfig();
+  const scriptConfig = getScriptConfig();
+  const miningStrategy = await setStrategy(userConfig);
+  await mineManyTestnet(userConfig, scriptConfig, miningStrategy);
   printDivider();
   exitSuccess("all actions complete, script exiting...");
 }
