@@ -9,6 +9,7 @@ import {
   debugLog,
   exitError,
   fetchJson,
+  fixBigInt,
   fromMicro,
   printDivider,
   printTimeStamp,
@@ -203,7 +204,9 @@ export async function monitorTx(
 
 export async function submitTx(txOptions: any, network: string) {
   try {
+    // console.log(`txOptions:\n${JSON.stringify(txOptions, fixBigInt, 2)}`);
     const transaction = await makeContractCall(txOptions);
+    // console.log(`transaction:\n${JSON.stringify(transaction, fixBigInt, 2)}`);
     const broadcastResult = await broadcastTransaction(
       transaction,
       NETWORK(network)
