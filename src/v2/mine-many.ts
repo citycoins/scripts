@@ -35,7 +35,6 @@ import {
   getMiningStatsAtBlock,
   selectCityVersion,
 } from "../../lib/citycoins";
-import { network } from "blockstack";
 
 let currentBlockHeight = 0;
 
@@ -102,6 +101,11 @@ async function getScriptConfig(network: string) {
           value > 0 ? true : "Value must be greater than 0",
       },
       {
+        type: null,
+        name: "commitTotal",
+        message: "Total commit amount in uSTX? (1,000,000 uSTX = 1 STX)",
+      },
+      {
         type: "toggle",
         name: "customFee",
         message: `Set custom fee per TX?`,
@@ -121,6 +125,10 @@ async function getScriptConfig(network: string) {
       onCancel: (prompt: any) => cancelPrompt(prompt.name),
     }
   );
+
+  if (scriptConfig.startNow)
+    scriptConfig.targetBlockHeight = currentBlockHeight;
+
   return scriptConfig;
 }
 
@@ -269,6 +277,9 @@ async function setMiningStrategy(
       (stxBalance - scriptConfig.feeAmount) / scriptConfig.numberOfBlocks;
   }
 
+  scriptConfig.commitTotal =
+    scriptConfig.commitAmount * scriptConfig.numberOfBlocks;
+
   // summarize TX info
   printDivider();
   console.log("TX INFORMATION");
@@ -277,11 +288,7 @@ async function setMiningStrategy(
   console.log(`balance: ${fromMicro(stxBalance)} STX`);
   console.log(`commitAmount: ${fromMicro(scriptConfig.commitAmount)} STX`);
   console.log(`numberOfBlocks: ${scriptConfig.numberOfBlocks}`);
-  console.log(
-    `commitTotal: ${fromMicro(
-      scriptConfig.commitAmount * scriptConfig.numberOfBlocks
-    )} STX`
-  );
+  console.log(`commitTotal: ${fromMicro(scriptConfig.commitTotal)} STX`);
   console.log(`feeAmount: ${fromMicro(scriptConfig.feeAmount)} STX`);
 }
 
