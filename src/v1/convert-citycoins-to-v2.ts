@@ -69,6 +69,15 @@ export async function promptUser() {
         ],
       },
       {
+        type: "select",
+        name: "network",
+        message: "Select a network:",
+        choices: [
+          { title: "Mainnet", value: "mainnet" },
+          { title: "Testnet", value: "testnet" },
+        ],
+      },
+      {
         type: "text",
         name: "stxSender",
         message: "Stacks Address to convert with?",
@@ -103,7 +112,7 @@ export async function convertToV2(config: any) {
     exitError(`No balance to convert, exiting...`);
   }
   // get nonce
-  const nonce = await getNonce(config.stxSender);
+  const nonce = await getNonce(config.network, config.stxSender);
   console.log(`nonce: ${nonce}`);
   // create tx options
   const txOptions: SignedContractCallOptions = {

@@ -69,6 +69,15 @@ export async function promptUser() {
         ],
       },
       {
+        type: "select",
+        name: "network",
+        message: "Select a network:",
+        choices: [
+          { title: "Mainnet", value: "mainnet" },
+          { title: "Testnet", value: "testnet" },
+        ],
+      },
+      {
         type: "text",
         name: "stxSender",
         message: "Stacks Address to transfer from?",
@@ -153,7 +162,7 @@ export async function tokenTransfer(config: any) {
     exitError(`Insufficient balance: ${balance} < ${config.transferAmount}`);
   }
   // get nonce
-  const nonce = await getNonce(config.stxSender);
+  const nonce = await getNonce(config.network, config.stxSender);
   debugLog(`nonce: ${nonce}`);
   // create clarity values
   const amountCV = uintCV(config.transferAmount);

@@ -48,6 +48,15 @@ async function setUserConfig() {
         ],
       },
       {
+        type: "select",
+        name: "network",
+        message: "Select a network:",
+        choices: [
+          { title: "Mainnet", value: "mainnet" },
+          { title: "Testnet", value: "testnet" },
+        ],
+      },
+      {
         type: "text",
         name: "stxSender",
         message: "Stacks Address to claim with?",
@@ -158,7 +167,7 @@ async function setStrategy(config: any) {
 
 async function claimMiningRewards(config: any, strategy: any) {
   // get current block height
-  const currentBlockHeight = await getStacksBlockHeight();
+  const currentBlockHeight = await getStacksBlockHeight(config.network);
   // validate start/end block heights
   if (config.startBlock > config.endBlock) {
     exitError("Start block must be less than end block");
@@ -176,7 +185,7 @@ async function claimMiningRewards(config: any, strategy: any) {
   console.log(`totalBlocks: ${config.endBlock - config.startBlock + 1}`);
   // get info for transactions
   const cityConfig = await getFullCityConfig(config.citycoin.toLowerCase());
-  let nonce = await getNonce(config.stxSender);
+  let nonce = await getNonce(config.network, config.stxSender);
   console.log(`nonce: ${nonce}`);
   // max tx in mempool at one time
   const claimLimit = 25;

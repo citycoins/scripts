@@ -39,6 +39,15 @@ async function setUserConfig() {
         ],
       },
       {
+        type: "select",
+        name: "network",
+        message: "Select a network:",
+        choices: [
+          { title: "Mainnet", value: "mainnet" },
+          { title: "Testnet", value: "testnet" },
+        ],
+      },
+      {
         type: "text",
         name: "stxSender",
         message: "Stacks Address to claim with?",
@@ -134,7 +143,7 @@ async function claimStackingRewards(config: any, strategy: any) {
   // get current version
   const [currentVersion] = cityInfo.versions.slice(-1);
   // get current block height
-  const currentBlockHeight = await getStacksBlockHeight();
+  const currentBlockHeight = await getStacksBlockHeight(config.network);
   // get current reward cycle
   const currentCycle = await getRewardCycle(
     currentVersion,
@@ -169,7 +178,7 @@ async function claimStackingRewards(config: any, strategy: any) {
   }
   // get info for transactions
   const cityConfig = await getFullCityConfig(config.citycoin.toLowerCase());
-  let nonce = await getNonce(config.stxSender);
+  let nonce = await getNonce(config.network, config.stxSender);
   console.log(`nonce: ${nonce}`);
   // max tx in mempool at one time
   const claimLimit = 25;
