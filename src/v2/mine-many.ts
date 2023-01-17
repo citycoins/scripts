@@ -197,7 +197,7 @@ async function setMiningStrategy(
       },
       { onCancel: (prompt: any) => cancelPrompt(prompt.name) }
     );
-    if (!confirmCommit)
+    if (!confirmCommit.confirm)
       exitError("Custom commit amount not confirmed, exiting...");
   } else {
     // else get strategy info to set commit amount
