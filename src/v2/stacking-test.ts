@@ -1,9 +1,11 @@
 import {
+  bufferCV,
   bufferCVFromString,
   noneCV,
   principalCV,
   uintCV,
 } from "micro-stacks/clarity";
+import { hexToBytes } from "micro-stacks/common";
 import {
   AnchorMode,
   FungibleConditionCode,
@@ -19,9 +21,10 @@ import {
 } from "../../lib/stacks";
 import { exitSuccess, getUserConfig, printDivider } from "../../lib/utils";
 
+// Friedger pool details
 const poolAddress = "SP1K1A1PMGW2ZJCNF46NWZWHG8TS1D23EGH1KNK60";
-const poxVer = "0x01";
-const poxHash = "0x13effebe0ea4bb45e35694f5a15bb5b96e851afb";
+const poxVer = "01";
+const poxHash = "13effebe0ea4bb45e35694f5a15bb5b96e851afb";
 
 async function main() {
   const userConfig = await getUserConfig();
@@ -57,9 +60,15 @@ async function main() {
     anchorMode: AnchorMode.Any,
   };
   */
-  console.log(`encode toString: ${bufferCVFromString(poxVer).toString()}`);
 
   // stacking from contract
+
+  // inspecting values
+  // console.log(`poxVer: ${poxVer}`);
+  // console.log(`poxVer encoded: ${hexToBytes(poxVer).toString()}`);
+  // console.log(`poxHash: ${poxHash}`);
+  // console.log(`poxHash encoded: ${hexToBytes(poxHash).toString()}`);
+
   const txOptions = {
     contractAddress: "SP2HNY1HNF5X25VC7GZ3Y48JC4762AYFHKS061BM0",
     contractName: "stacking-contract",
@@ -67,8 +76,8 @@ async function main() {
     functionArgs: [
       uintCV(amount),
       principalCV(poolAddress),
-      bufferCVFromString(poxVer),
-      bufferCVFromString(poxHash),
+      bufferCV(hexToBytes(poxVer)),
+      bufferCV(hexToBytes(poxHash)),
       noneCV(),
     ],
     senderKey: key,
