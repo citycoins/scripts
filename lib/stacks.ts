@@ -3,12 +3,14 @@ import { StacksMainnet, StacksTestnet } from "micro-stacks/network";
 import {
   broadcastTransaction,
   makeContractCall,
+  SignedContractCallOptions,
   TxBroadcastResult,
 } from "micro-stacks/transactions";
 import {
   debugLog,
   exitError,
   fetchJson,
+  fixBigInt,
   fromMicro,
   printDivider,
   printTimeStamp,
@@ -230,11 +232,18 @@ export async function monitorTx(
   );
 }
 
-export async function submitTx(txOptions: any, network: string) {
+export async function submitTx(
+  txOptions: SignedContractCallOptions,
+  network: string
+) {
   try {
-    // console.log(`txOptions:\n${JSON.stringify(txOptions, fixBigInt, 2)}`);
+    console.log(`txOptions:\n${JSON.stringify(txOptions, fixBigInt, 2)}`);
     const transaction = await makeContractCall(txOptions);
-    // console.log(`transaction:\n${JSON.stringify(transaction, fixBigInt, 2)}`);
+    console.log(`transaction:\n${JSON.stringify(transaction, fixBigInt, 2)}`);
+    console.log(`waiting 60 sec to broadcast`);
+    await sleep(50000);
+    console.log(`10 seconds left`);
+    await sleep(10000);
     const broadcastResult = await broadcastTransaction(
       transaction,
       NETWORK(network)
