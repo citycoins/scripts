@@ -8,7 +8,7 @@ import {
   exitSuccess,
   printDivider,
 } from "../../lib/utils";
-import { getNonce, STACKS_NETWORK } from "../../lib/stacks";
+import { DEFAULT_FEE, getNonce, STACKS_NETWORK } from "../../lib/stacks";
 import { getCCBalance } from "../../lib/citycoins";
 import {
   PostConditionMode,
@@ -20,9 +20,6 @@ import {
   AnchorMode,
   broadcastTransaction,
 } from "micro-stacks/transactions";
-
-// set default fee to save time/prompts
-const DEFAULT_FEE = 500000; // 0.5 STX, avg is 0.003 STX
 
 export async function promptUser() {
   // set submit action for prompts

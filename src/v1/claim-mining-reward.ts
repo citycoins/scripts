@@ -11,6 +11,7 @@ import {
   sleep,
 } from "../../lib/utils";
 import {
+  DEFAULT_FEE,
   getNonce,
   getStacksBlockHeight,
   STACKS_NETWORK,
@@ -28,8 +29,6 @@ import {
   makeContractCall,
   PostConditionMode,
 } from "micro-stacks/transactions";
-
-const DEFAULT_FEE = 50000; // 0.05 STX per TX
 
 async function setUserConfig() {
   printDivider();

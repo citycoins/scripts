@@ -1,12 +1,6 @@
 import prompts from "prompts";
 import { noneCV, stringUtf8CV } from "micro-stacks/clarity";
-import { validateStacksAddress } from "micro-stacks/crypto";
-import {
-  AnchorMode,
-  broadcastTransaction,
-  makeContractCall,
-  PostConditionMode,
-} from "micro-stacks/transactions";
+import { AnchorMode, PostConditionMode } from "micro-stacks/transactions";
 import { getFullCityConfig, selectCityVersion } from "../../lib/citycoins";
 import {
   deriveChildAccount,
@@ -24,7 +18,6 @@ import {
   getUserConfig,
   printAddress,
   printDivider,
-  sleep,
 } from "../../lib/utils";
 
 const DEFAULT_FEE = 1000000; // 1 STX per TX

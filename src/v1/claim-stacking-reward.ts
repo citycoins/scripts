@@ -9,7 +9,7 @@ import {
   printAddress,
   printDivider,
 } from "../../lib/utils";
-import { getNonce, getStacksBlockHeight } from "../../lib/stacks";
+import { DEFAULT_FEE, getNonce, getStacksBlockHeight } from "../../lib/stacks";
 import {
   getCityInfo,
   getFullCityConfig,
@@ -19,8 +19,6 @@ import {
   getUserId,
   UserIds,
 } from "../../lib/citycoins";
-
-const DEFAULT_FEE = 50000; // 0.05 STX per TX
 
 async function setUserConfig() {
   printDivider();
