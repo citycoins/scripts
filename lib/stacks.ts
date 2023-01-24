@@ -118,7 +118,7 @@ export async function getOptimalFee(
 ) {
   let counter = 0;
   let total = 0;
-  let limit = 200;
+  let limit = 50;
   let url = "";
   let txResults: any = [];
 

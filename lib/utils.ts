@@ -1,5 +1,4 @@
 import { validateStacksAddress } from "micro-stacks/crypto";
-import fetch from "node-fetch";
 import prompts from "prompts";
 import throttledQueue from "throttled-queue";
 import {
