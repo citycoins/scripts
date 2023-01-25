@@ -125,7 +125,6 @@ async function claimStackingRewards(userConfig: any, scriptConfig: any) {
     userConfig.accountIndex
   );
   let nonce = await getNonce(userConfig.network, userConfig.address);
-  console.log(`nonce: ${nonce}`);
   const cityConfig = await getFullCityConfig(userConfig.citycoin.toLowerCase());
   const version = await selectCityVersion(
     userConfig.citycoin.toLowerCase(),
@@ -167,9 +166,11 @@ async function claimStackingRewards(userConfig: any, scriptConfig: any) {
           senderAddress: address,
         },
         true
-      ).catch(() => 0)
+      ).catch(() => {
+        console.log("error fetching stacking reward");
+        return 0;
+      })
     );
-    console.log(`stackingReward: ${JSON.stringify(stackingReward)}`);
     const stackerInfo: StackerAtCycle = await fetchReadOnlyFunction(
       {
         contractAddress: cityConfig[version].deployer,
@@ -181,11 +182,18 @@ async function claimStackingRewards(userConfig: any, scriptConfig: any) {
       },
       true
     );
-    console.log(`toReturn: ${stackerInfo.toReturn}`);
-    if (stackingReward === 0 && stackerInfo.toReturn === 0) {
+    // TODO: stackerInfo.toReturn type incorrect
+    // interface specifies number type
+    // result above produces string type
+    // using loose equality for now
+    if (stackingReward == 0 && stackerInfo.toReturn == 0) {
       console.log(`no rewards, skipping...`);
       continue;
     }
+    console.log(`stackingReward: ${fromMicro(stackingReward)} STX`);
+    console.log(
+      `toReturn: ${fromMicro(stackerInfo.toReturn)} ${userConfig.citycoin}`
+    );
     // build post conditions
     let postConditions = [];
     if (stackingReward > 0)
