@@ -9,10 +9,19 @@ import {
 import { confirmByPrompt, exitError, onCancel, printDivider } from "./utils";
 import { fetchCoreApiInfo } from "micro-stacks/api";
 
+export interface StacksConfig {
+  network: string;
+  mnemonic: string;
+  accountIndex: number;
+  address: string;
+}
+
 export const DEFAULT_FEE = 50000; // 0.05 STX per TX
+
 const STACKS_MAINNET = new StacksMainnet({
   coreApiUrl: "https://stacks-node-api.mainnet.stacks.co",
 });
+
 const STACKS_TESTNET = new StacksTestnet({
   coreApiUrl: "https://stacks-node-api.testnet.stacks.co",
 });
@@ -37,6 +46,7 @@ const TX_VERSION = (network: string) => {
   }
 };
 
+// TODO: easier than direct v2/info call?
 export async function getStacksBlockHeight(network: string) {
   const coreApiInfo = await fetchCoreApiInfo({
     url: NETWORK(network).coreApiUrl,
@@ -44,7 +54,10 @@ export async function getStacksBlockHeight(network: string) {
   return coreApiInfo;
 }
 
-export async function getStacksConfig(keyRequired = true) {
+// TODO: if key not required ask for address as input instead of deriving from keys
+export async function getStacksConfig(
+  keyRequired = true
+): Promise<StacksConfig> {
   printDivider();
   console.log("SETTING STACKS CONFIGURATION");
   printDivider();

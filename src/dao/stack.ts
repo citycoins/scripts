@@ -1,8 +1,12 @@
-import { listCV, stringAsciiCV, uintCV, UIntCV } from "micro-stacks/clarity";
+import { stringAsciiCV, uintCV } from "micro-stacks/clarity";
 import { CityConfig, getCityConfig } from "../../lib/dao/citycoins";
-import { DEFAULT_FEE, getStacksConfig, NETWORK } from "../../lib/dao/stacks";
 import {
-  fixBigInt,
+  DEFAULT_FEE,
+  getStacksConfig,
+  NETWORK,
+  StacksConfig,
+} from "../../lib/dao/stacks";
+import {
   fromMicro,
   printDivider,
   printIntro,
@@ -12,7 +16,6 @@ import { deriveChildAccount, getNonce, submitTx } from "../../lib/stacks";
 import {
   AnchorMode,
   FungibleConditionCode,
-  makeStandardSTXPostCondition,
   PostConditionMode,
 } from "micro-stacks/transactions";
 import {
@@ -26,9 +29,12 @@ async function getScriptConfig(network: string) {
   printDivider();
 }
 
-async function mineMany(stacks: any) {}
+async function mineMany(stacks: StacksConfig) {}
 
-async function quickAndDirtyStacking(stacks: any, citycoins: CityConfig) {
+async function quickAndDirtyStacking(
+  stacks: StacksConfig,
+  citycoins: CityConfig
+) {
   // get account address and private key
   const { address, key } = await deriveChildAccount(
     stacks.network,
@@ -88,7 +94,7 @@ async function quickAndDirtyStacking(stacks: any, citycoins: CityConfig) {
 
 async function main() {
   printIntro(
-    "Mine CityCoins",
+    "Stack CityCoins",
     "Builds and submits a stacking transaction for CityCoins on the Stacks blockchain.",
     true
   );

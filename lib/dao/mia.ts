@@ -4,6 +4,32 @@ import {
   CityVersionList,
 } from "./citycoins";
 
+/* COMPILED CONFIGURATION OBJECT */
+
+const miaVersions = (network: string): CityVersionList => {
+  return {
+    "legacy-v1": miaLegacyV1(network),
+    "legacy-v2": miaLegacyV2(network),
+    "dao-v1": miaDaoV1(network),
+  };
+};
+
+// version keys are included in city object
+// currentVersion is the default version
+export const miaConfigList = (network: string): CityConfigList => {
+  return {
+    city: {
+      name: "mia",
+      displayName: "Miami",
+      logo: "https://cdn.citycoins.co/logos/miamicoin.png",
+      versions: Object.keys(miaVersions),
+      currentVersion: "dao-v1",
+      activationBlock: 24497,
+    },
+    versions: miaVersions(network),
+  };
+};
+
 /* SETTINGS PER CODE VERSION */
 
 const miaLegacyV1 = (network: string): CityVersionConfig => {
@@ -94,14 +120,14 @@ const miaDaoV1 = (network: string): CityVersionConfig => {
     auth: {
       deployer:
         network === "mainnet"
-          ? "TBD"
+          ? "SP1XQXW9JNQ1W4A7PYTN3HCHPEY7SHM6KP98H3NCY"
           : "ST355N8734E5PVX9538H2QGMFP38RE211D9E2B4X5",
       contractName: "ccd001-direct-execute",
     },
     mining: {
       deployer:
         network === "mainnet"
-          ? "TBD"
+          ? "SP1XQXW9JNQ1W4A7PYTN3HCHPEY7SHM6KP98H3NCY"
           : "ST355N8734E5PVX9538H2QGMFP38RE211D9E2B4X5",
       contractName: "ccd006-city-mining",
       miningFunction: "mine",
@@ -110,7 +136,7 @@ const miaDaoV1 = (network: string): CityVersionConfig => {
     stacking: {
       deployer:
         network === "mainnet"
-          ? "TBD"
+          ? "SP1XQXW9JNQ1W4A7PYTN3HCHPEY7SHM6KP98H3NCY"
           : "ST355N8734E5PVX9538H2QGMFP38RE211D9E2B4X5",
       contractName: "ccd007-city-stacking",
       stackingFunction: "stack",
@@ -119,7 +145,7 @@ const miaDaoV1 = (network: string): CityVersionConfig => {
     token: {
       deployer:
         network === "mainnet"
-          ? "TBD"
+          ? "SP1H1733V5MZ3SZ9XRW9FKYGEZT0JDGEB8Y634C7R"
           : "ST1H1733V5MZ3SZ9XRW9FKYGEZT0JDGEB8WRH7C6H",
       contractName: "miamicoin-token-v2",
       tokenName: "miamicoin",
@@ -127,31 +153,5 @@ const miaDaoV1 = (network: string): CityVersionConfig => {
       decimals: 6,
       symbol: "MIA",
     },
-  };
-};
-
-/* COMPILED CONFIGURATION OBJECT */
-
-const miaVersions = (network: string): CityVersionList => {
-  return {
-    "legacy-v1": miaLegacyV1(network),
-    "legacy-v2": miaLegacyV2(network),
-    "dao-v1": miaDaoV1(network),
-  };
-};
-
-// version keys are included in city object
-// currentVersion is the default version
-export const miaConfigList = (network: string): CityConfigList => {
-  return {
-    city: {
-      name: "mia",
-      displayName: "Miami",
-      logo: "https://cdn.citycoins.co/logos/miamicoin.png",
-      versions: Object.keys(miaVersions),
-      currentVersion: "dao-v1",
-      activationBlock: 24497,
-    },
-    versions: miaVersions(network),
   };
 };

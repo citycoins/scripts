@@ -1,8 +1,12 @@
 import { listCV, stringAsciiCV, uintCV, UIntCV } from "micro-stacks/clarity";
 import { CityConfig, getCityConfig } from "../../lib/dao/citycoins";
-import { DEFAULT_FEE, getStacksConfig, NETWORK } from "../../lib/dao/stacks";
 import {
-  fixBigInt,
+  DEFAULT_FEE,
+  getStacksConfig,
+  NETWORK,
+  StacksConfig,
+} from "../../lib/dao/stacks";
+import {
   fromMicro,
   printDivider,
   printIntro,
@@ -24,7 +28,10 @@ async function getScriptConfig(network: string) {
 
 async function mineMany(stacks: any) {}
 
-async function quickAndDirtyMining(stacks: any, citycoins: CityConfig) {
+async function quickAndDirtyMining(
+  stacks: StacksConfig,
+  citycoins: CityConfig
+) {
   // get account address and private key
   const { address, key } = await deriveChildAccount(
     stacks.network,
