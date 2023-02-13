@@ -36,6 +36,9 @@ export interface CityVersionConfig {
   mining: MiningContract;
   stacking: StackingContract;
   token: TokenContract;
+  dao?: {
+    [key: string]: BaseContract;
+  };
 }
 
 interface BaseContract {
@@ -58,6 +61,11 @@ interface TokenContract extends BaseContract {
   decimals: number;
   tokenName: string;
   symbol: string;
+}
+
+export interface Stacker {
+  claimable: number;
+  stacked: number;
 }
 
 /* PROMPT HELPERS */
@@ -89,6 +97,65 @@ export async function getCityConfig(network: string) {
 }
 
 /* CITY CONFIGURATION HELPERS */
+
+export const daoDeployer = (network: string): string => {
+  return network === "mainnet"
+    ? "SP1XQXW9JNQ1W4A7PYTN3HCHPEY7SHM6KP98H3NCY"
+    : "ST355N8734E5PVX9538H2QGMFP38RE211D9E2B4X5";
+};
+
+export const daoContracts = (network: string) => {
+  const contracts = {
+    ccd001: {
+      deployer: daoDeployer(network),
+      contractName: "ccd001-direct-execute",
+    },
+    // TODO: 4 different types to start
+    ccd002: {
+      deployer: daoDeployer(network),
+      contractName: "ccd002-treasury",
+    },
+    ccd003: {
+      deployer: daoDeployer(network),
+      contractName: "ccd003-user-registry",
+    },
+    ccd004: {
+      deployer: daoDeployer(network),
+      contractName: "ccd004-city-registry",
+    },
+    ccd005: {
+      deployer: daoDeployer(network),
+      contractName: "ccd005-city-data",
+    },
+    // TODO: -citycoin-
+    ccd006: {
+      deployer: daoDeployer(network),
+      contractName: "ccd006-city-mining",
+    },
+    // TODO: -citycoin-
+    ccd007: {
+      deployer: daoDeployer(network),
+      contractName: "ccd007-city-stacking",
+    },
+    ccd008: {
+      deployer: daoDeployer(network),
+      contractName: "ccd008-city-activation",
+    },
+    ccd009: {
+      deployer: daoDeployer(network),
+      contractName: "ccd009-auth-v2-adapter",
+    },
+    ccd010: {
+      deployer: daoDeployer(network),
+      contractName: "ccd010-core-v2-adapter",
+    },
+    ccd011: {
+      deployer: daoDeployer(network),
+      contractName: "ccd011-stacking-payouts",
+    },
+  };
+  return contracts;
+};
 
 // general getter for full city configurations
 export function getCityConfigList(network: string, city: string) {

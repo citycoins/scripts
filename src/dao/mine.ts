@@ -77,7 +77,7 @@ async function quickAndDirtyMining(
     network: NETWORK(stacks.network),
     anchorMode: AnchorMode.Any,
   };
-  // pause 15sec to allow checking data manually
+  // pause 5sec to allow checking data manually
   console.log("pausing 5sec before submit...");
   await sleep(5000);
   const txResult = await submitTx(txOptions, stacks.network);

@@ -2,6 +2,8 @@ import {
   CityConfigList,
   CityVersionConfig,
   CityVersionList,
+  daoContracts,
+  daoDeployer,
 } from "./citycoins";
 
 /* COMPILED CONFIGURATION OBJECT */
@@ -118,26 +120,17 @@ const miaDaoV1 = (network: string): CityVersionConfig => {
     startAt: undefined,
     endAt: undefined,
     auth: {
-      deployer:
-        network === "mainnet"
-          ? "SP1XQXW9JNQ1W4A7PYTN3HCHPEY7SHM6KP98H3NCY"
-          : "ST355N8734E5PVX9538H2QGMFP38RE211D9E2B4X5",
+      deployer: daoDeployer(network),
       contractName: "ccd001-direct-execute",
     },
     mining: {
-      deployer:
-        network === "mainnet"
-          ? "SP1XQXW9JNQ1W4A7PYTN3HCHPEY7SHM6KP98H3NCY"
-          : "ST355N8734E5PVX9538H2QGMFP38RE211D9E2B4X5",
+      deployer: daoDeployer(network),
       contractName: "ccd006-city-mining",
       miningFunction: "mine",
-      miningClaimFunction: "claim-mining-reward",
+      miningClaimFunction: "claim-mining-block",
     },
     stacking: {
-      deployer:
-        network === "mainnet"
-          ? "SP1XQXW9JNQ1W4A7PYTN3HCHPEY7SHM6KP98H3NCY"
-          : "ST355N8734E5PVX9538H2QGMFP38RE211D9E2B4X5",
+      deployer: daoDeployer(network),
       contractName: "ccd007-city-stacking",
       stackingFunction: "stack",
       stackingClaimFunction: "claim-stacking-reward",
@@ -153,5 +146,6 @@ const miaDaoV1 = (network: string): CityVersionConfig => {
       decimals: 6,
       symbol: "MIA",
     },
+    dao: daoContracts(network),
   };
 };
