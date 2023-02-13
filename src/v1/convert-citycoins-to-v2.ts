@@ -7,9 +7,9 @@ import {
   exitError,
   exitSuccess,
   printDivider,
-} from "../lib/utils";
-import { getNonce, STACKS_NETWORK } from "../lib/stacks";
-import { getCCBalance } from "../lib/citycoins";
+} from "../../lib/utils";
+import { DEFAULT_FEE, getNonce, STACKS_NETWORK } from "../../lib/stacks";
+import { getCCBalance } from "../../lib/citycoins";
 import {
   PostConditionMode,
   makeStandardFungiblePostCondition,
@@ -20,9 +20,6 @@ import {
   AnchorMode,
   broadcastTransaction,
 } from "micro-stacks/transactions";
-
-// set default fee to save time/prompts
-const DEFAULT_FEE = 500000; // 0.5 STX, avg is 0.003 STX
 
 export async function promptUser() {
   // set submit action for prompts
@@ -69,6 +66,15 @@ export async function promptUser() {
         ],
       },
       {
+        type: "select",
+        name: "network",
+        message: "Select a network:",
+        choices: [
+          { title: "Mainnet", value: "mainnet" },
+          { title: "Testnet", value: "testnet" },
+        ],
+      },
+      {
         type: "text",
         name: "stxSender",
         message: "Stacks Address to convert with?",
@@ -103,7 +109,7 @@ export async function convertToV2(config: any) {
     exitError(`No balance to convert, exiting...`);
   }
   // get nonce
-  const nonce = await getNonce(config.stxSender);
+  const nonce = await getNonce(config.network, config.stxSender);
   console.log(`nonce: ${nonce}`);
   // create tx options
   const txOptions: SignedContractCallOptions = {

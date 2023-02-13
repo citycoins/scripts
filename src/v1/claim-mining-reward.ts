@@ -9,14 +9,19 @@ import {
   printAddress,
   printDivider,
   sleep,
-} from "../lib/utils";
-import { getNonce, getStacksBlockHeight, STACKS_NETWORK } from "../lib/stacks";
+} from "../../lib/utils";
+import {
+  DEFAULT_FEE,
+  getNonce,
+  getStacksBlockHeight,
+  STACKS_NETWORK,
+} from "../../lib/stacks";
 import { validateStacksAddress } from "micro-stacks/crypto";
 import {
   canClaimMiningReward,
   getFullCityConfig,
   selectCityVersion,
-} from "../lib/citycoins";
+} from "../../lib/citycoins";
 import { uintCV } from "micro-stacks/clarity";
 import {
   AnchorMode,
@@ -24,8 +29,6 @@ import {
   makeContractCall,
   PostConditionMode,
 } from "micro-stacks/transactions";
-
-const DEFAULT_FEE = 50000; // 0.05 STX per TX
 
 async function setUserConfig() {
   printDivider();
@@ -41,6 +44,15 @@ async function setUserConfig() {
         choices: [
           { title: "MiamiCoin (MIA)", value: "MIA" },
           { title: "NewYorkCityCoin (NYC)", value: "NYC" },
+        ],
+      },
+      {
+        type: "select",
+        name: "network",
+        message: "Select a network:",
+        choices: [
+          { title: "Mainnet", value: "mainnet" },
+          { title: "Testnet", value: "testnet" },
         ],
       },
       {
@@ -154,7 +166,7 @@ async function setStrategy(config: any) {
 
 async function claimMiningRewards(config: any, strategy: any) {
   // get current block height
-  const currentBlockHeight = await getStacksBlockHeight();
+  const currentBlockHeight = await getStacksBlockHeight(config.network);
   // validate start/end block heights
   if (config.startBlock > config.endBlock) {
     exitError("Start block must be less than end block");
@@ -172,7 +184,7 @@ async function claimMiningRewards(config: any, strategy: any) {
   console.log(`totalBlocks: ${config.endBlock - config.startBlock + 1}`);
   // get info for transactions
   const cityConfig = await getFullCityConfig(config.citycoin.toLowerCase());
-  let nonce = await getNonce(config.stxSender);
+  let nonce = await getNonce(config.network, config.stxSender);
   console.log(`nonce: ${nonce}`);
   // max tx in mempool at one time
   const claimLimit = 25;

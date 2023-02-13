@@ -10,7 +10,7 @@ import {
   printDivider,
   sleep,
   waitUntilBlock,
-} from "../lib/utils";
+} from "../../lib/utils";
 import {
   getNonce,
   getOptimalFee,
@@ -18,9 +18,9 @@ import {
   getStacksBlockHeight,
   monitorTx,
   STACKS_NETWORK,
-} from "../lib/stacks";
+} from "../../lib/stacks";
 import { validateStacksAddress } from "micro-stacks/crypto";
-import { getMiningStatsAtBlock } from "../lib/citycoins";
+import { getMiningStatsAtBlock } from "../../lib/citycoins";
 import { listCV, UIntCV, uintCV } from "micro-stacks/clarity";
 import {
   AnchorMode,
@@ -32,7 +32,9 @@ import {
 } from "micro-stacks/transactions";
 
 async function setUserConfig() {
-  const currentBlockHeight = await getStacksBlockHeight();
+  // TODO: hardcoded based on old functionality of just mainnet
+  // user config will still allow selecting testnet
+  const currentBlockHeight = await getStacksBlockHeight("mainnet");
   // set submit action for prompts
   // to add CityCoin contract values
   // TODO: generalize this same way as CityCoins UI
@@ -69,6 +71,15 @@ async function setUserConfig() {
         choices: [
           { title: "MiamiCoin (MIA)", value: "MIA" },
           { title: "NewYorkCityCoin (NYC)", value: "NYC" },
+        ],
+      },
+      {
+        type: "select",
+        name: "network",
+        message: "Select a network:",
+        choices: [
+          { title: "Mainnet", value: "mainnet" },
+          { title: "Testnet", value: "testnet" },
         ],
       },
       {
@@ -204,7 +215,7 @@ async function setStrategy(config: any) {
     );
     printDivider();
     // set fee amount based on strategy
-    feeAmount = await getOptimalFee(feeMultiplier.value);
+    feeAmount = await getOptimalFee(config.network, feeMultiplier.value);
   }
   console.log(`feeAmount: ${fromMicro(feeAmount)} STX`);
 
@@ -297,7 +308,7 @@ async function setStrategy(config: any) {
   console.log(`commitAmount: ${fromMicro(commitAmount)} STX`);
 
   // check that commit with fee doesn't exceed balance
-  const balances = await getStacksBalances(config.stxSender);
+  const balances = await getStacksBalances(config.network, config.stxSender);
   const stxBalance = balances.stx.balance;
   if (commitAmount + feeAmount > stxBalance) {
     console.log("commit + fee > balance, recalculating...");
@@ -325,7 +336,7 @@ async function setStrategy(config: any) {
 }
 
 async function getBlockCommit(userConfig: any, commitStrategy: any) {
-  const currentBlockHeight = await getStacksBlockHeight();
+  const currentBlockHeight = await getStacksBlockHeight(userConfig.network);
   console.log(`currentBlockHeight: ${currentBlockHeight}`);
   console.log(`strategyDistance: ${commitStrategy.strategyDistance}`);
   // get historical average commit for selected distance
@@ -389,6 +400,7 @@ async function getBlockCommitAvg(
 async function mineMany(config: any, strategy: any): Promise<any> {
   // loop until target block is reached
   const startMiner = await waitUntilBlock(
+    config.network,
     config.targetBlockHeight,
     config.stxSender
   );
@@ -403,7 +415,7 @@ async function mineMany(config: any, strategy: any): Promise<any> {
     }
     const mineManyArrayCV = listCV(mineManyArray);
     // get nonce
-    const nonce = await getNonce(config.stxSender);
+    const nonce = await getNonce(config.network, config.stxSender);
     // print tx info
     printAddress(config.stxSender);
     console.log(`nonce: ${nonce}`);
@@ -443,7 +455,7 @@ async function mineMany(config: any, strategy: any): Promise<any> {
       );
       console.log("pausing 15sec after submit...");
       await sleep(15000);
-      const nextTarget = await monitorTx(broadcastResult, transaction.txid());
+      const nextTarget = await monitorTx(config.network, broadcastResult);
       if (config.continuousMining || config.numberOfRuns > 0) {
         config.numberOfRuns -= 1;
         config.targetBlockHeight = nextTarget + config.numberOfBlocks;
