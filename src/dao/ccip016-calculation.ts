@@ -32,19 +32,25 @@ async function downloadCCD007Transactions() {
   const data: TransactionResults = await response.json();
   console.log("Total transactions: ", data.total);
   // setup the array to store all transactions
+  const failedOffsets: number[] = [];
   const transactions = data.results;
+  const totalTransactions = data.total;
+  const iterations = Math.ceil(totalTransactions / limit);
   console.log(
-    `Fetched transactions: ${transactions.length} / ${data.total} (${Math.round(
-      (transactions.length / data.total) * 100
+    `Fetched transactions: ${
+      transactions.length
+    } / ${totalTransactions} (${Math.round(
+      (transactions.length / totalTransactions) * 100
     )}%)`
   );
-  // loop through all transactions
-  while (transactions.length < data.total) {
+  // loop and fetch all transactions in API
+  for (let i = 1; i < iterations; i++) {
     offset += limit;
     url.searchParams.set("offset", offset.toString());
     const response = await fetch(url.toString());
     if (!response.ok) {
       console.log("Fetch failed for offset: ", offset);
+      failedOffsets.push(offset);
       console.log("Retrying after 5 seconds");
       await new Promise((r) => setTimeout(r, 5000));
       continue;
@@ -53,10 +59,45 @@ async function downloadCCD007Transactions() {
     const data: TransactionResults = await response.json();
     transactions.push(...data.results);
     console.log(
-      `Fetched transactions: ${transactions.length} / ${
-        data.total
-      } (${Math.round((transactions.length / data.total) * 100)}%)`
+      `Fetched transactions: ${
+        transactions.length
+      } / ${totalTransactions} (${Math.round(
+        (transactions.length / totalTransactions) * 100
+      )}%)`
     );
+  }
+
+  // retry failed offsets
+  while (failedOffsets.length > 0) {
+    const failedOffset = failedOffsets.shift();
+    url.searchParams.set("offset", failedOffset!.toString());
+    const response = await fetch(url.toString());
+    if (!response.ok) {
+      console.log("Retry failed for offset: ", failedOffset);
+      failedOffsets.push(failedOffset!);
+      console.log("Retrying after 5 seconds");
+      await new Promise((r) => setTimeout(r, 5000));
+      continue;
+    }
+    const data: TransactionResults = await response.json();
+    transactions.push(...data.results);
+    console.log(
+      `Fetched transactions: ${
+        transactions.length
+      } / ${totalTransactions} (${Math.round(
+        (transactions.length / totalTransactions) * 100
+      )}%)`
+    );
+  }
+
+  // show that totals match
+  console.log(
+    `Verifying total transactions: ${transactions.length} / ${totalTransactions}`
+  );
+  // check if the transactions are the same
+  if (transactions.length !== totalTransactions) {
+    console.error("Transactions do not match");
+    return;
   }
   // create a timestamp YYYY-MM-DD-HH-MM-SS
   const timestamp = new Date().toISOString().replace(/:/g, "-");
