@@ -30,6 +30,14 @@ import {
 } from "../../lib/dao/utils";
 import { deriveChildAccount, getNonce, submitTx } from "../../lib/stacks";
 
+const deployer = "ST355N8734E5PVX9538H2QGMFP38RE211D9E2B4X5"; // ST8A9HZ3PKST0S42VM9523Z9NV42SZ026VZRMY61
+const contractName = "ccd007-city-stacking";
+// const deployer = "ST8A9HZ3PKST0S42VM9523Z9NV42SZ026VZRMY61";
+// const contractName = "ccd007-citycoin-stacking";
+const functionName = "claim-stacking-reward";
+const startCycle = 399;
+const endCycle = 399;
+
 async function quickAndDirtyStackingClaim(
   stacks: StacksConfig,
   citycoins: CityConfig
@@ -49,8 +57,6 @@ async function quickAndDirtyStackingClaim(
   // get current cycle
   const currentCycle = await getCurrentRewardCycle(stacks, citycoins);
   // set stacking params
-  const startCycle = 399;
-  const endCycle = 430;
   const claimLimit = 25;
   let counter = 1;
   // print tx info
@@ -101,8 +107,8 @@ async function quickAndDirtyStackingClaim(
     const postConditions = [];
     postConditions.push(
       makeContractSTXPostCondition(
-        citycoins.config.dao!.ccd007.deployer,
-        citycoins.config.dao!.ccd007.contractName,
+        deployer, // citycoins.config.dao!.ccd007.deployer,
+        contractName, // citycoins.config.dao!.ccd007.contractName,
         FungibleConditionCode.Equal,
         rewards
       )
@@ -110,8 +116,8 @@ async function quickAndDirtyStackingClaim(
     if (stacker.claimable > 0) {
       postConditions.push(
         makeContractFungiblePostCondition(
-          citycoins.config.dao!.ccd007.deployer,
-          citycoins.config.dao!.ccd007.contractName,
+          deployer, // citycoins.config.dao!.ccd007.deployer,
+          contractName, // citycoins.config.dao!.ccd007.contractName,
           FungibleConditionCode.Equal,
           stacker.claimable,
           createAssetInfo(
@@ -124,9 +130,9 @@ async function quickAndDirtyStackingClaim(
     }
     // create the stacking claim tx
     const txOptions = {
-      contractAddress: citycoins.config.dao!.ccd007.deployer,
-      contractName: citycoins.config.dao!.ccd007.contractName,
-      functionName: "claim-stacking-reward",
+      contractAddress: deployer, // citycoins.config.dao!.ccd007.deployer,
+      contractName: contractName, // citycoins.config.dao!.ccd007.contractName,
+      functionName: functionName,
       functionArgs: [
         stringAsciiCV(citycoins.city.name.toLowerCase()),
         uintCV(cycle),
@@ -151,8 +157,8 @@ async function quickAndDirtyStackingClaim(
 
 async function main() {
   printIntro(
-    "Stack CityCoins",
-    "Builds and submits a stacking transaction for CityCoins on the Stacks blockchain.",
+    "Claim CityCoins Stacking Rewards",
+    "Builds and submits a stacking claim transaction for CityCoins on the Stacks blockchain.",
     true
   );
   const stacks = await getStacksConfig();

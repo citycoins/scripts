@@ -20,6 +20,7 @@ import {
   generateWallet,
   getStxAddress,
 } from "@stacks/wallet-sdk";
+import { AddressBalanceResponse } from "@stacks/stacks-blockchain-api-types";
 
 // mainnet toggle, otherwise testnet
 export const MAINNET = false;
@@ -101,11 +102,12 @@ export async function getTotalMempoolTx(network: string): Promise<number> {
 export async function getStacksBalances(
   network: string,
   address: string
-): Promise<any> {
+): Promise<AddressBalanceResponse> {
   const url = `${NETWORK(
     network
   ).getCoreApiUrl()}/extended/v1/address/${address}/balances`;
-  const balanceResult = await fetchJson(url);
+  const balanceResult: AddressBalanceResponse = await fetchJson(url);
+  // console.log(`balanceResult: ${JSON.stringify(balanceResult)}`);
   return balanceResult;
 }
 

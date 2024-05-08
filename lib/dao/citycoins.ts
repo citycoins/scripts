@@ -5,9 +5,12 @@ import { exitError, onCancel, printDivider } from "./utils";
 
 /* CITY TYPE DEFINITIONS */
 
+// TODO: compare against latest UI types
+// may be easier to standardize on one style
+
 export interface CityConfigList {
   city: CityInfo;
-  versions: CityVersionList;
+  versions: CityVersionConfigList;
 }
 
 export interface CityConfig {
@@ -24,10 +27,13 @@ export interface CityInfo {
   activationBlock: number;
 }
 
-export type CityVersionList = {
+export type CityVersionConfigList = {
   [index: string]: CityVersionConfig;
 };
 
+// create one for legacy
+// create one for DAO
+// then use | to combine them
 export interface CityVersionConfig {
   enabled: boolean;
   startAt?: number;

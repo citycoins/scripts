@@ -1,14 +1,14 @@
 import {
   CityConfigList,
   CityVersionConfig,
-  CityVersionList,
+  CityVersionConfigList,
   daoContracts,
   daoDeployer,
 } from "./citycoins";
 
 /* COMPILED CONFIGURATION OBJECT */
 
-const miaVersions = (network: string): CityVersionList => {
+const miaVersions = (network: string): CityVersionConfigList => {
   return {
     "legacy-v1": miaLegacyV1(network),
     "legacy-v2": miaLegacyV2(network),
@@ -127,7 +127,7 @@ const miaDaoV1 = (network: string): CityVersionConfig => {
       deployer: daoDeployer(network),
       contractName: "ccd006-city-mining",
       miningFunction: "mine",
-      miningClaimFunction: "claim-mining-block",
+      miningClaimFunction: "claim-mining-reward",
     },
     stacking: {
       deployer: daoDeployer(network),

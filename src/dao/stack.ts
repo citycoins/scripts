@@ -31,6 +31,12 @@ async function getScriptConfig(network: string) {
 
 async function mineMany(stacks: StacksConfig) {}
 
+const deployer = "ST8A9HZ3PKST0S42VM9523Z9NV42SZ026VZRMY61";
+const contractName = "ccd007-citycoin-stacking";
+const functionName = "stack";
+const amountToStack = 1_000_000_000; // 1000 citycoins
+const numberOfCycles = 32;
+
 async function quickAndDirtyStacking(
   stacks: StacksConfig,
   citycoins: CityConfig
@@ -41,8 +47,6 @@ async function quickAndDirtyStacking(
     stacks.mnemonic,
     stacks.accountIndex
   );
-  const amountToStack = 1_000_000_000; // 1000 citycoins
-  const numberOfCycles = 32;
   // get nonce
   const nonce = await getNonce(stacks.network, address);
   // print tx info
@@ -56,9 +60,9 @@ async function quickAndDirtyStacking(
   console.log(`numberOfCycles: ${numberOfCycles}`);
   // create the mining tx
   const txOptions = {
-    contractAddress: citycoins.config.stacking.deployer,
-    contractName: citycoins.config.stacking.contractName,
-    functionName: citycoins.config.stacking.stackingFunction,
+    contractAddress: deployer, // citycoins.config.stacking.deployer,
+    contractName: contractName, // citycoins.config.stacking.contractName,
+    functionName: functionName, // citycoins.config.stacking.stackingFunction,
     functionArgs: [
       stringAsciiCV(citycoins.city.name.toLowerCase()),
       uintCV(amountToStack),

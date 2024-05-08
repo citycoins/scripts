@@ -17,20 +17,24 @@ async function getScriptConfig(network: string) {
   printDivider();
 }
 
+const deployer = "ST8A9HZ3PKST0S42VM9523Z9NV42SZ026VZRMY61";
+const contractName = "ccd006-citycoin-mining";
+const functionName = "claim-mining-reward";
+const startBlock = 95737;
+const endBlock = 95762;
+
 async function claimMiningReward(stacks: StacksConfig, citycoins: CityConfig) {
   printDivider();
   console.log("SCANNING SELECTED BLOCKS");
   printDivider();
   // get current block height
-  const currentBlockHeight = await getStacksBlockHeight(stacks.network);
+  // const currentBlockHeight = await getStacksBlockHeight(stacks.network);
   // get account address and private key
   const { address, key } = await deriveChildAccount(
     stacks.network,
     stacks.mnemonic,
     stacks.accountIndex
   );
-  const startBlock = 95737;
-  const endBlock = 95762;
   const claimLimit = 25;
   let counter = 1;
   // get nonce
@@ -52,9 +56,9 @@ async function claimMiningReward(stacks: StacksConfig, citycoins: CityConfig) {
     console.log(`claiming block: ${block}`);
     // create the mining claim tx
     const txOptions = {
-      contractAddress: citycoins.config.mining.deployer,
-      contractName: citycoins.config.mining.contractName,
-      functionName: citycoins.config.mining.miningClaimFunction,
+      contractAddress: deployer, // citycoins.config.mining.deployer,
+      contractName: contractName, // citycoins.config.mining.contractName,
+      functionName: functionName, // citycoins.config.mining.miningClaimFunction,
       functionArgs: [
         stringAsciiCV(citycoins.city.name.toLowerCase()),
         uintCV(block),

@@ -48,8 +48,15 @@ export async function fetchJson(url: string) {
   debugLog(`fetchJson: fetching ${url}`);
   const response = await throttle(() => fetch(url));
   if (response.status === 200) {
-    const json = await response.json();
-    return json;
+    const contentType = response.headers.get("content-type");
+    console.log(`contentType: ${contentType}`);
+    const text = await response.text();
+    //console.log(`text: ${text}`);
+    try {
+      return JSON.parse(text);
+    } catch {
+      return text;
+    }
   }
   throw new Error(
     `fetchJson: ${url} ${response.status} ${response.statusText}`

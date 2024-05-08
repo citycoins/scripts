@@ -1,14 +1,14 @@
 import {
   CityConfigList,
   CityVersionConfig,
-  CityVersionList,
+  CityVersionConfigList,
   daoContracts,
   daoDeployer,
 } from "./citycoins";
 
 /* COMPILED CONFIGURATION OBJECT */
 
-const nycVersions = (network: string): CityVersionList => {
+const nycVersions = (network: string): CityVersionConfigList => {
   return {
     "legacy-v1": nycLegacyV1(network),
     "legacy-v2": nycLegacyV2(network),
@@ -22,11 +22,11 @@ export const nycConfigList = (network: string): CityConfigList => {
   return {
     city: {
       name: "nyc",
-      displayName: "Miami",
+      displayName: "New York City",
       logo: "https://cdn.citycoins.co/logos/newyorkcitycoin.png",
       versions: Object.keys(nycVersions),
       currentVersion: "dao-v1",
-      activationBlock: 24497,
+      activationBlock: 37449,
     },
     versions: nycVersions(network),
   };
@@ -37,7 +37,7 @@ export const nycConfigList = (network: string): CityConfigList => {
 const nycLegacyV1 = (network: string): CityVersionConfig => {
   return {
     enabled: false,
-    startAt: 24497,
+    startAt: 37449,
     endAt: 58917,
     auth: {
       deployer:

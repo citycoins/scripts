@@ -28,6 +28,12 @@ async function getScriptConfig(network: string) {
 
 async function mineMany(stacks: any) {}
 
+const deployer = "ST8A9HZ3PKST0S42VM9523Z9NV42SZ026VZRMY61";
+const contractName = "ccd006-citycoin-mining";
+const functionName = "mine";
+const amountPerBlock = 1_000_000; // 1 STX per block
+const numberOfBlocks = 200;
+
 async function quickAndDirtyMining(
   stacks: StacksConfig,
   citycoins: CityConfig
@@ -38,8 +44,6 @@ async function quickAndDirtyMining(
     stacks.mnemonic,
     stacks.accountIndex
   );
-  const amountPerBlock = 1000000; // 1 STX per block
-  const numberOfBlocks = 200;
   const totalCommit = amountPerBlock * numberOfBlocks;
   const mineManyArray: UIntCV[] = [];
   for (let i = 0; i < numberOfBlocks; i++) {
@@ -56,9 +60,9 @@ async function quickAndDirtyMining(
   console.log(`commitTotal: ${fromMicro(totalCommit)} STX`);
   // create the mining tx
   const txOptions = {
-    contractAddress: citycoins.config.mining.deployer,
-    contractName: citycoins.config.mining.contractName,
-    functionName: citycoins.config.mining.miningFunction,
+    contractAddress: deployer, // citycoins.config.mining.deployer,
+    contractName: contractName, // citycoins.config.mining.contractName,
+    functionName: functionName, // citycoins.config.mining.miningFunction,
     functionArgs: [
       stringAsciiCV(citycoins.city.name.toLowerCase()),
       mineManyArrayCV,
