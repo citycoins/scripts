@@ -3,6 +3,7 @@
 // https://github.com/citycoins/governance/pull/16
 
 import { TransactionResults } from "@stacks/stacks-blockchain-api-types";
+import { writeFile } from "fs/promises";
 
 async function downloadCCD007Transactions() {
   // set contract info
@@ -34,19 +35,18 @@ async function downloadCCD007Transactions() {
   const transactions = data.results;
   console.log(
     `Fetched transactions: ${transactions.length} / ${data.total} (${Math.round(
-      transactions.length / data.total
+      (transactions.length / data.total) * 100
     )}%)`
   );
   // loop through all transactions
   while (transactions.length < data.total) {
-    await new Promise((r) => setTimeout(r, 500));
     offset += limit;
     url.searchParams.set("offset", offset.toString());
     const response = await fetch(url.toString());
     if (!response.ok) {
       console.log("Fetch failed for offset: ", offset);
-      console.log("Retrying after 3 seconds");
-      await new Promise((r) => setTimeout(r, 3000));
+      console.log("Retrying after 5 seconds");
+      await new Promise((r) => setTimeout(r, 5000));
       continue;
     }
     // parse the response and store in array
@@ -55,9 +55,17 @@ async function downloadCCD007Transactions() {
     console.log(
       `Fetched transactions: ${transactions.length} / ${
         data.total
-      } (${Math.round(transactions.length / data.total)}%)`
+      } (${Math.round((transactions.length / data.total) * 100)}%)`
     );
   }
+  // create a timestamp YYYY-MM-DD-HH-MM-SS
+  const timestamp = new Date().toISOString().replace(/:/g, "-");
+  // store the transactions in a file
+  await writeFile(
+    `./${timestamp}-transactions.json`,
+    JSON.stringify(transactions, null, 2),
+    "utf-8"
+  );
 }
 
 async function main() {
