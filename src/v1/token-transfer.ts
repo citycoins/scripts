@@ -8,9 +8,9 @@ import {
   exitSuccess,
   printDivider,
   MICRO_UNITS,
-} from "../lib/utils";
-import { getNonce, STACKS_NETWORK } from "../lib/stacks";
-import { getCCBalance } from "../lib/citycoins";
+} from "../../lib/utils";
+import { DEFAULT_FEE, getNonce, STACKS_NETWORK } from "../../lib/stacks";
+import { getCCBalance } from "../../lib/citycoins";
 import {
   bufferCVFromString,
   noneCV,
@@ -28,9 +28,6 @@ import {
   AnchorMode,
   broadcastTransaction,
 } from "micro-stacks/transactions";
-
-// set default fee to save time/prompts
-const DEFAULT_FEE = 10000; // 0.01 STX, avg is 0.003 STX
 
 export async function promptUser() {
   // set submit action for prompts
@@ -66,6 +63,15 @@ export async function promptUser() {
         choices: [
           { title: "MiamiCoin (MIA)", value: "MIA" },
           { title: "NewYorkCityCoin (NYC)", value: "NYC" },
+        ],
+      },
+      {
+        type: "select",
+        name: "network",
+        message: "Select a network:",
+        choices: [
+          { title: "Mainnet", value: "mainnet" },
+          { title: "Testnet", value: "testnet" },
         ],
       },
       {
@@ -153,7 +159,7 @@ export async function tokenTransfer(config: any) {
     exitError(`Insufficient balance: ${balance} < ${config.transferAmount}`);
   }
   // get nonce
-  const nonce = await getNonce(config.stxSender);
+  const nonce = await getNonce(config.network, config.stxSender);
   debugLog(`nonce: ${nonce}`);
   // create clarity values
   const amountCV = uintCV(config.transferAmount);

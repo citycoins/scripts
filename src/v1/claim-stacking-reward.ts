@@ -8,8 +8,8 @@ import {
   fromMicro,
   printAddress,
   printDivider,
-} from "../lib/utils";
-import { getNonce, getStacksBlockHeight } from "../lib/stacks";
+} from "../../lib/utils";
+import { DEFAULT_FEE, getNonce, getStacksBlockHeight } from "../../lib/stacks";
 import {
   getCityInfo,
   getFullCityConfig,
@@ -18,9 +18,7 @@ import {
   getStackingReward,
   getUserId,
   UserIds,
-} from "../lib/citycoins";
-
-const DEFAULT_FEE = 50000; // 0.05 STX per TX
+} from "../../lib/citycoins";
 
 async function setUserConfig() {
   printDivider();
@@ -36,6 +34,15 @@ async function setUserConfig() {
         choices: [
           { title: "MiamiCoin (MIA)", value: "MIA" },
           { title: "NewYorkCityCoin (NYC)", value: "NYC" },
+        ],
+      },
+      {
+        type: "select",
+        name: "network",
+        message: "Select a network:",
+        choices: [
+          { title: "Mainnet", value: "mainnet" },
+          { title: "Testnet", value: "testnet" },
         ],
       },
       {
@@ -134,7 +141,7 @@ async function claimStackingRewards(config: any, strategy: any) {
   // get current version
   const [currentVersion] = cityInfo.versions.slice(-1);
   // get current block height
-  const currentBlockHeight = await getStacksBlockHeight();
+  const currentBlockHeight = await getStacksBlockHeight(config.network);
   // get current reward cycle
   const currentCycle = await getRewardCycle(
     currentVersion,
@@ -169,7 +176,7 @@ async function claimStackingRewards(config: any, strategy: any) {
   }
   // get info for transactions
   const cityConfig = await getFullCityConfig(config.citycoin.toLowerCase());
-  let nonce = await getNonce(config.stxSender);
+  let nonce = await getNonce(config.network, config.stxSender);
   console.log(`nonce: ${nonce}`);
   // max tx in mempool at one time
   const claimLimit = 25;
