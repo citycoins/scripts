@@ -102,6 +102,35 @@ function printDivider() {
   console.log("-------------------------");
 }
 
+/**
+ * Get the Stacks block height for a given Bitcoin block height.
+ * @param btcHeight Bitcoin block height
+ * @param maxRetries Maximum number of retries to attempt
+ * @returns Stacks block height if found, otherwise null.
+ */
+async function getStxBlockHeight(
+  btcHeight: number,
+  maxRetries: number = 5
+): Promise<number | null> {
+  async function tryGetStxBlockHeight(
+    currentBtcHeight: number,
+    retriesLeft: number
+  ): Promise<number | null> {
+    const btcToStxUrl = `${hiroApiBase}${btcToStxEndpoint}/${currentBtcHeight}/blocks`;
+    const btcToStxData = await fancyFetch<BlockListResponse>(btcToStxUrl).catch(
+      () => undefined
+    );
+    if (btcToStxData && btcToStxData.results.length > 0) {
+      return btcToStxData.results[0].height;
+    }
+    if (retriesLeft > 0) {
+      return tryGetStxBlockHeight(currentBtcHeight + 1, retriesLeft - 1);
+    }
+    return null;
+  }
+  return tryGetStxBlockHeight(btcHeight, maxRetries);
+}
+
 //////////////////////////////////////////////////
 //
 // Transactions
@@ -255,56 +284,32 @@ async function prepareCCIP016BlockHeights() {
         const firstBlockResponse = await fancyFetch<string>(
           firstBlockUrl,
           false
-        );
-        const firstBlock = Number(firstBlockResponse);
+        ).catch(() => undefined);
+        let firstBlock: number | null;
+        if (firstBlockResponse) {
+          firstBlock = Number(firstBlockResponse);
+        } else {
+          firstBlock = null;
+        }
         // store the block height in the object
-        console.log("BTC block:", firstBlock);
         cycleData[cycle].btcHeight = firstBlock;
       }
+      console.log("BTC block:", cycleData[cycle].btcHeight);
       // set the stacks block height if it's missing
       if (cycleData[cycle]?.btcHeight && !cycleData[cycle]?.stxHeight) {
         const btcHeight = cycleData[cycle].btcHeight;
         if (btcHeight) {
-          // get the corresponding stacks block height
-          const btcToStxUrl = `${hiroApiBase}${btcToStxEndpoint}/${btcHeight}/blocks`;
-          const btcToStxData = await fancyFetch<BlockListResponse>(
-            btcToStxUrl
-          ).catch(() => {
-            // return empty results in object
-            return undefined;
-          });
-          let results: Block[] = [];
-          console.log("STX block data:", btcToStxData);
-          if (btcToStxData && btcToStxData.results.length > 0) {
-            // use the results if they exist
-            results = btcToStxData.results;
-          } else {
-            // retry with one block previous
-            const btcToStxUrlPrev = `${hiroApiBase}${btcToStxEndpoint}/${
-              btcHeight - 1
-            }/blocks`;
-            const btcToStxDataPrev = await fancyFetch<BlockListResponse>(
-              btcToStxUrlPrev
-            ).catch(() => {
-              // return empty results in object
-              return undefined;
-            });
-            console.log("STX block data (prev):", btcToStxDataPrev);
-            if (btcToStxDataPrev && btcToStxDataPrev.results.length > 0) {
-              // use the results if they exist
-              results = btcToStxDataPrev.results;
-            }
-          }
-          const stxBlock = results.length > 0 ? results[0].height : null;
-          console.log("STX block:", stxBlock);
-          cycleData[cycle].stxHeight = stxBlock;
+          // get the corresponding stacks block height for the bitcoin block
+          const stxHeight = await getStxBlockHeight(btcHeight);
+          cycleData[cycle].stxHeight = stxHeight;
         }
       }
+      console.log("STX block:", cycleData[cycle].stxHeight);
       // set the payout block height if it's missing
       if (!cycleData[cycle]?.payoutHeight) {
         // need to decide what to do here
-        console.log("Payout block:", null);
       }
+      console.log("Payout block:", null);
     }
   }
   // save cycle data to file
