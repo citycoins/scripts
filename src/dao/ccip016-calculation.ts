@@ -1,178 +1,244 @@
-// Downloads all transactions
-// and performs analysis for CCIP-016
-// https://github.com/citycoins/governance/pull/16
-
 import {
   BlockListResponse,
   TransactionResults,
+  Transaction,
+  AddressTransactionsWithTransfersListResponse,
 } from "@stacks/stacks-blockchain-api-types";
-import { writeFile } from "fs/promises";
+import { readFile, writeFile } from "fs/promises";
 
+//////////////////////////////////////////////////
+//
+// Downloads all transactions and performs analysis for CCIP-016
+// Designed to run and produce independently verifiable results
+// https://github.com/citycoins/governance/pull/16
+//
+//////////////////////////////////////////////////
+
+// set contract info
+const contractDeployer = "SP8A9HZ3PKST0S42VM9523Z9NV42SZ026V4K39WH";
+const contractName = "ccd007-citycoin-stacking";
+const contractAddress = `${contractDeployer}.${contractName}`;
+
+// set API base urls
 const hiroApiBase = "https://api.mainnet.hiro.so";
 const ccApiBase = "https://protocol.citycoins.co/api";
+// endpoint to get first bitcoin block in cycle
+// expects query param cycle
+const firstBlockEndpoint =
+  "/ccd007-citycoin-stacking/get-first-block-in-reward-cycle";
+// endpoint to get stacks block for bitcoin block
+const btcToStxEndpoint = "/extended/v2/burn-blocks";
 
+// start and end taken from CCIP-020
+// https://github.com/citycoins/governance/blob/feat/add-ccip-022/ccips/ccip-020/ccip-020-graceful-protocol-shutdown.md
+const startCycle = 54;
+const endCycle = 83;
+
+//////////////////////////////////////////////////
+//
+// Helper functions
+// Tools and logic reused elsewhere in the script.
+//
+//////////////////////////////////////////////////
+
+// file paths
+const transactionFile = "./results/transactions.json";
+const cycleFile = "./results/cycle-data.json";
+
+// object to store the cycle data
 interface CycleData {
   [key: number]: {
-    btcHeight?: number;
-    stxHeight?: number;
+    btcHeight: number | null;
+    stxHeight: number | null;
+    payoutHeight: number | null;
   };
 }
 
-/**
- * This function will download all of the transactions for the CCD007 contract and save them to a file.
- */
-async function downloadCCD007Transactions() {
-  // set contract info
-  const contractDeployer = "SP8A9HZ3PKST0S42VM9523Z9NV42SZ026V4K39WH";
-  const contractName = "ccd007-citycoin-stacking";
-  const contractAddress = `${contractDeployer}.${contractName}`;
-  // set API info
-  const endpoint = `/extended/v2/addresses/${contractAddress}/transactions`;
-  // setup url for fetch
-  const url = new URL(endpoint, hiroApiBase);
-  const limit = 50;
-  let offset = 0;
-  url.searchParams.set("limit", limit.toString());
-  url.searchParams.set("offset", offset.toString());
-
-  // make initial fetch to get the total
-  const response = await fetch(url.toString());
-  // pass through if any errors
-  if (!response.ok) {
-    throw new Error(
-      `Failed to fetch transactions for ${contractAddress} from Stacks Node API: ${response.status}, ${response.statusText}`
-    );
-  }
-  // parse the response
-  const data: TransactionResults = await response.json();
-  console.log("Total transactions: ", data.total);
-  // setup the array to store all transactions
-  const failedOffsets: number[] = [];
-  const transactions = data.results;
-  const totalTransactions = data.total;
-  const iterations = Math.ceil(totalTransactions / limit);
-  console.log(
-    `Fetched transactions: ${
-      transactions.length
-    } / ${totalTransactions} (${Math.round(
-      (transactions.length / totalTransactions) * 100
-    )}%)`
-  );
-  // loop and fetch all transactions in API
-  for (let i = 1; i < iterations; i++) {
-    offset += limit;
-    url.searchParams.set("offset", offset.toString());
-    const response = await fetch(url.toString());
-    if (!response.ok) {
-      console.log("Fetch failed for offset: ", offset);
-      failedOffsets.push(offset);
-      console.log("Retrying after 5 seconds");
-      await new Promise((r) => setTimeout(r, 5000));
-      continue;
-    }
-    // parse the response and store in array
-    const data: TransactionResults = await response.json();
-    transactions.push(...data.results);
-    console.log(
-      `Fetched transactions: ${
-        transactions.length
-      } / ${totalTransactions} (${Math.round(
-        (transactions.length / totalTransactions) * 100
-      )}%)`
-    );
-  }
-
-  // retry failed offsets
-  while (failedOffsets.length > 0) {
-    const failedOffset = failedOffsets.shift();
-    url.searchParams.set("offset", failedOffset!.toString());
-    const response = await fetch(url.toString());
-    if (!response.ok) {
-      console.log("Retry failed for offset: ", failedOffset);
-      failedOffsets.push(failedOffset!);
-      console.log("Retrying after 5 seconds");
-      await new Promise((r) => setTimeout(r, 5000));
-      continue;
-    }
-    const data: TransactionResults = await response.json();
-    transactions.push(...data.results);
-    console.log(
-      `Fetched transactions: ${
-        transactions.length
-      } / ${totalTransactions} (${Math.round(
-        (transactions.length / totalTransactions) * 100
-      )}%)`
-    );
-  }
-
-  // show that totals match
-  console.log(
-    `Verifying total transactions: ${transactions.length} / ${totalTransactions}`
-  );
-  // check if the transactions are the same
-  if (transactions.length !== totalTransactions) {
-    console.error("Transactions do not match");
-    return;
-  }
-  // create a timestamp YYYY-MM-DD-HH-MM-SS
-  const timestamp = new Date().toISOString().replace(/:/g, "-");
-  // store the transactions in a file
-  await writeFile(
-    `./${timestamp}-transactions.json`,
-    JSON.stringify(transactions, null, 2),
-    "utf-8"
-  );
+// simple sleep function
+async function sleep(ms: number) {
+  await new Promise((resolve) => setTimeout(resolve, ms));
 }
 
-/*
-BETTER PATTERN
-
-fill the object with the keys
-iterate over the keys and fill in bitcoin block height
-iterate over the keys and fill in stacks block height
-easier to retry and handle edge cases?
-*/
+// fetch function with retries
+async function fancyFetch<T>(
+  url: string,
+  json = true,
+  retries = 3,
+  attempts = 1
+): Promise<T> {
+  try {
+    const response = await fetch(url);
+    if (!response.ok) {
+      throw new Error(
+        `Failed to fetch from ${url}: ${response.status}, ${response.statusText}`
+      );
+    }
+    const responseData: T = json
+      ? await response.json()
+      : await response.text();
+    return responseData;
+  } catch (error) {
+    if (attempts < retries) {
+      console.log(`(${attempts}) Retrying fetch in 5 seconds... (${error})`);
+      await sleep(5000);
+      return fancyFetch(url, json, retries, attempts + 1);
+    } else {
+      throw error;
+    }
+  }
+}
 
 /**
- * This function will get the block heights for the stacking cycles in the CCD007 contract.
+ * @param error the error object.
+ * @returns if given error object is a NodeJS error.
  */
-async function getCCD007BlockHeights() {
-  // start and end taken from CCIP-020
-  // https://github.com/citycoins/governance/blob/feat/add-ccip-022/ccips/ccip-020/ccip-020-graceful-protocol-shutdown.md
-  const startCycle = 54;
-  const endCycle = 83;
+const isNodeError = (error: Error): error is NodeJS.ErrnoException =>
+  error instanceof Error;
 
-  // endpoint to get first bitcoin block in cycle
-  // expects query param cycle
-  const firstBlockEndpoint =
-    "/ccd007-citycoin-stacking/get-first-block-in-reward-cycle";
-  // endpoint to get stacks block for bitcoin block
-  const btcToStxEndpoint = "/extended/v2/burn-blocks";
+// print a divider to the console
+function printDivider() {
+  console.log("-------------------------");
+}
 
-  const cycleData: CycleData = {};
+//////////////////////////////////////////////////
+//
+// Transactions
+// Functions to prepare and download transactions for CCD007
+//
+//////////////////////////////////////////////////
 
-  // loop through each cycle to build the information
-  for (let cycle = startCycle; cycle <= endCycle; cycle++) {
-    let btcHeight: number | undefined;
-    let stxHeight: number | undefined;
-    console.log(`Fetching data for cycle ${cycle}`);
-    try {
-      // check if we already have the data for the cycle
-      if (
-        cycleData[cycle] &&
-        cycleData[cycle]?.btcHeight &&
-        cycleData[cycle]?.stxHeight
-      ) {
-        console.log(`Already have data for cycle ${cycle}`);
-        continue;
+async function prepareCCD007Transactions() {
+  // load txs from file
+  let existingTransactions: Transaction[] = [];
+  try {
+    const fileData = await readFile(transactionFile, "utf-8");
+    existingTransactions = JSON.parse(fileData);
+    console.log(`Loaded ${existingTransactions.length} transactions from file`);
+  } catch (error) {
+    if (
+      error instanceof Error &&
+      isNodeError(error) &&
+      error.code === "ENOENT"
+    ) {
+      console.log("No existing transactions file found, starting fresh...");
+    } else {
+      console.error("Error loading transactions from file:", error);
+    }
+  }
+  // check count against total in API
+  const endpoint = `/extended/v2/addresses/${contractAddress}/transactions`;
+  const limit = 50;
+  const url = new URL(endpoint, hiroApiBase);
+  url.searchParams.set("limit", limit.toString());
+  const response =
+    await fancyFetch<AddressTransactionsWithTransfersListResponse>(
+      url.toString()
+    );
+  const totalTransactions = response.total;
+  const newTransactions = response.results.map((txRecord) => txRecord.tx);
+  // get unique transactions
+  const uniqueTransactions = [
+    ...existingTransactions,
+    ...newTransactions.filter(
+      (apiTx) =>
+        !existingTransactions.some((fileTx) => fileTx.tx_id === apiTx.tx_id)
+    ),
+  ];
+  console.log(`Total transactions in file: ${existingTransactions.length}`);
+  console.log(`Total transactions in API: ${totalTransactions}`);
+  console.log(`Total unique transactions: ${uniqueTransactions.length}`);
+  // download any missing transactions
+  if (uniqueTransactions.length < totalTransactions) {
+    console.log("Downloading missing transactions...");
+    let offset = 0;
+    const iterations = Math.ceil(totalTransactions / limit);
+    for (let i = 1; i < iterations; i++) {
+      printDivider();
+      console.log("iteration", i, "of", iterations, "...");
+      offset += limit;
+      url.searchParams.set("offset", offset.toString());
+      const response =
+        await fancyFetch<AddressTransactionsWithTransfersListResponse>(
+          url.toString()
+        );
+      // filter out the transactions that already exist in uniqueTransactions
+      const newTransactions = response.results.map((txRecord) => txRecord.tx);
+      console.log(newTransactions.length, "new transactions");
+      // add the new unique transactions
+      uniqueTransactions.push(
+        ...newTransactions.filter(
+          (apiTx) =>
+            !uniqueTransactions.some((fileTx) => fileTx.tx_id === apiTx.tx_id)
+        )
+      );
+      console.log(uniqueTransactions.length, "total unique transactions");
+      // log unique against total with percentage
+      console.log(
+        `progress: ${uniqueTransactions.length} / ${totalTransactions} (${(
+          (uniqueTransactions.length / totalTransactions) *
+          100
+        ).toFixed(2)}%)`
+      );
+      // exit loop if we get to the expected total
+      if (uniqueTransactions.length === totalTransactions) {
+        break;
       }
+    }
+  }
+  // save txs to file
+  await writeFile(
+    transactionFile,
+    JSON.stringify(uniqueTransactions, null, 2),
+    "utf-8"
+  );
+  // return transactions
+  return uniqueTransactions;
+}
 
-      // check if we have the bitcoin block height
-      if (cycleData[cycle].btcHeight) {
-        console.log(`Setting Bitcoin block from cycle data`);
-        btcHeight = cycleData[cycle].btcHeight;
-      } else {
-        console.log(`Fetching Bitcoin block for cycle ${cycle}`);
+//////////////////////////////////////////////////
+//
+// Cycle data / block heights
+// Functions to prepare and download block heights for CCIP016
+//
+//////////////////////////////////////////////////
+
+async function prepareCCIP016BlockHeights() {
+  // load cycle data from file
+  let cycleData: CycleData = {};
+  try {
+    const fileData = await readFile(cycleFile, "utf-8");
+    cycleData = JSON.parse(fileData);
+    console.log(`Loaded cycle data from file`);
+  } catch (error) {
+    console.error("Error loading cycle data from file:", error);
+  }
+  // check if all cycles have data
+  const missingCycles: number[] = [];
+  // loop through each cycle to check for missing data
+  for (let cycle = startCycle; cycle <= endCycle; cycle++) {
+    if (
+      !cycleData[cycle] ||
+      !cycleData[cycle]?.btcHeight ||
+      !cycleData[cycle]?.stxHeight ||
+      !cycleData[cycle]?.payoutHeight
+    ) {
+      missingCycles.push(cycle);
+    }
+  }
+  // download any missing cycle data
+  if (missingCycles.length > 0) {
+    for (const cycle of missingCycles) {
+      console.log(`Fetching data for cycle ${cycle}`);
+      // create the cycle object if it doesn't exist
+      if (!cycleData[cycle]) {
+        cycleData[cycle] = {
+          btcHeight: null,
+          stxHeight: null,
+          payoutHeight: null,
+        };
+      }
+      // set the btc block height if it's missing
+      if (!cycleData[cycle]?.btcHeight) {
         // get the first bitcoin block in the cycle
         const firstBlockUrl = `${ccApiBase}${firstBlockEndpoint}?cycle=${cycle}&format=raw`;
         const firstBlockResponse = await fetch(firstBlockUrl);
@@ -182,62 +248,59 @@ async function getCCD007BlockHeights() {
           );
         }
         const firstBlock = await firstBlockResponse.text();
-        btcHeight = Number(firstBlock);
+        cycleData[cycle].btcHeight = Number(firstBlock);
       }
-      console.log(`btc block: ${btcHeight}`);
-
-      // check if we have the stacks block height
-      if (cycleData[cycle].stxHeight) {
-        stxHeight = cycleData[cycle].stxHeight;
-      } else {
-      }
-      if (!cycleData[cycle].stxHeight) {
+      // set the stacks block height if it's missing
+      // (requires btc block height)
+      if (!cycleData[cycle]?.stxHeight && cycleData[cycle]?.btcHeight) {
         // get the corresponding stacks block height
-        const btcToStxUrl = `${hiroApiBase}${btcToStxEndpoint}/${btcHeight}/blocks`;
+        const btcToStxUrl = `${hiroApiBase}${btcToStxEndpoint}/${cycleData[cycle].btcHeight}/blocks`;
         const btcToStxResponse = await fetch(btcToStxUrl);
-
-        // if a 404
-        if (btcToStxResponse.status === 404) {
-          console.log(
-            `No Stacks block found for Bitcoin block ${btcHeight}. Skipping cycle ${cycle}`
-          );
-          continue;
-        }
-        // else if not ok
         if (!btcToStxResponse.ok) {
           throw new Error(
-            `Failed to fetch Stacks block height for Bitcoin block ${btcHeight}: ${btcToStxResponse.status}, ${btcToStxResponse.statusText}`
+            `Failed to fetch Stacks block height for Bitcoin block ${cycleData[cycle].btcHeight}: ${btcToStxResponse.status}, ${btcToStxResponse.statusText}`
           );
         }
-
         const btcToStxData: BlockListResponse = await btcToStxResponse.json();
-        stxHeight = btcToStxData.results[0].height;
+        cycleData[cycle].stxHeight = btcToStxData.results[0].height;
       }
-      console.log(`stx block: ${stxHeight}`);
-
-      // store the cycle data
-      cycleData[cycle] = {
-        btcHeight,
-        stxHeight,
-      };
-    } catch (error) {
-      console.error(`Error fetching data for cycle ${cycle}:`, error);
+      // set the payout block height if it's missing
+      // TODO
+      console.log(`Fetched data for cycle ${cycle}`);
     }
   }
-
-  // create a timestamp YYYY-MM-DD-HH-MM-SS
-  const timestamp = new Date().toISOString().replace(/:/g, "-");
-  // store the cycle data in a file
-  await writeFile(
-    `./${timestamp}-cycle-data.json`,
-    JSON.stringify(cycleData, null, 2),
-    "utf-8"
-  );
+  // save cycle data to file
+  await writeFile(cycleFile, JSON.stringify(cycleData, null, 2), "utf-8");
+  // return cycle data
+  return cycleData;
 }
 
+//////////////////////////////////////////////////
+//
+// Main function
+// Runs the logic for the script using functions above.
+//
+//////////////////////////////////////////////////
+
 async function main() {
-  // await downloadCCD007Transactions();
-  await getCCD007BlockHeights();
+  // get all of the transaction for CCD007
+  printDivider();
+  console.log("Preparing CCD007 transactions...");
+  printDivider();
+  const transactionData = await prepareCCD007Transactions();
+
+  // get all of the block heights for CCIP-016
+  printDivider();
+  console.log("Preparing CCIP016 block heights...");
+  printDivider();
+  const cycleData = await prepareCCIP016BlockHeights();
+
+  // run analysis
+  printDivider();
+  console.log("Running analysis...");
+  printDivider();
+  console.log("Total transactions:", transactionData.length);
+  console.log("Cycle data:", cycleData);
 }
 
 main();
