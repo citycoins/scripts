@@ -29,6 +29,7 @@ const btcToStxEndpoint = "/extended/v2/burn-blocks";
 // https://github.com/citycoins/governance/blob/feat/add-ccip-022/ccips/ccip-020/ccip-020-graceful-protocol-shutdown.md
 const startCycle = 54;
 const endCycle = 83;
+const cycleLength = 2100; // in Stacks blocks
 
 //////////////////////////////////////////////////
 //
@@ -41,11 +42,14 @@ const endCycle = 83;
 const cycleFile = "./results/cycle-data.json";
 
 // object to store the cycle data
+// this needs to include start/end BTC heights (since STX isn't 100% 1:1)
 interface CycleData {
   [key: number]: {
     // key: cycle number
-    btcHeight: number | null;
-    stxHeight: number | null;
+    btcStartHeight: number | null;
+    btcEndHeight: number | null;
+    stxStartHeight: number | null;
+    stxEndHeight: number | null;
   };
 }
 
@@ -299,8 +303,10 @@ async function prepareCCIP016BlockHeights() {
   for (let cycle = startCycle; cycle <= endCycle; cycle++) {
     if (
       !cycleData[cycle] ||
-      !cycleData[cycle]?.btcHeight ||
-      !cycleData[cycle]?.stxHeight
+      !cycleData[cycle]?.btcStartHeight ||
+      !cycleData[cycle]?.btcEndHeight ||
+      !cycleData[cycle]?.stxStartHeight ||
+      !cycleData[cycle]?.stxEndHeight
     ) {
       missingCycles.push(cycle);
     }
@@ -313,12 +319,14 @@ async function prepareCCIP016BlockHeights() {
       // create the cycle object if it doesn't exist
       if (!cycleData[cycle]) {
         cycleData[cycle] = {
-          btcHeight: null,
-          stxHeight: null,
+          btcStartHeight: null,
+          btcEndHeight: null,
+          stxStartHeight: null,
+          stxEndHeight: null,
         };
       }
-      // set the btc block height if it's missing
-      if (!cycleData[cycle]?.btcHeight) {
+      // set the btc start height if it's missing
+      if (!cycleData[cycle]?.btcStartHeight) {
         // get the first bitcoin block in the cycle
         const firstBlockUrl = `${ccApiBase}${firstBlockEndpoint}?cycle=${cycle}&format=raw`;
         const firstBlockResponse = await fancyFetch<string>(
@@ -332,19 +340,49 @@ async function prepareCCIP016BlockHeights() {
           firstBlock = null;
         }
         // store the block height in the object
-        cycleData[cycle].btcHeight = firstBlock;
+        cycleData[cycle].btcStartHeight = firstBlock;
       }
-      console.log("BTC block:", cycleData[cycle].btcHeight);
-      // set the stacks block height if it's missing
-      if (cycleData[cycle]?.btcHeight && !cycleData[cycle]?.stxHeight) {
-        const btcHeight = cycleData[cycle].btcHeight;
+      console.log("BTC start block:", cycleData[cycle].btcStartHeight);
+      // set the btc end height if it's missing
+      if (!cycleData[cycle]?.btcEndHeight) {
+        // get the first bitcoin block in the cycle
+        const endBlockUrl = `${ccApiBase}${firstBlockEndpoint}?cycle=${
+          cycle + 1
+        }&format=raw`;
+        const endBlockResponse = await fancyFetch<string>(
+          endBlockUrl,
+          false
+        ).catch(() => undefined);
+        let endBlock: number | null;
+        if (endBlockResponse) {
+          endBlock = Number(endBlockResponse);
+        } else {
+          endBlock = null;
+        }
+        // store the block height in the object
+        cycleData[cycle].btcEndHeight = endBlock;
+      }
+      console.log("BTC end block:", cycleData[cycle].btcEndHeight);
+      // set the stacks start height if it's missing
+      if (!cycleData[cycle]?.stxStartHeight) {
+        const btcHeight = cycleData[cycle].btcStartHeight;
         if (btcHeight) {
           // get the corresponding stacks block height for the bitcoin block
           const stxHeight = await getStxBlockHeight(btcHeight);
-          cycleData[cycle].stxHeight = stxHeight;
+          cycleData[cycle].stxStartHeight = stxHeight;
         }
       }
-      console.log("STX block:", cycleData[cycle].stxHeight);
+      console.log("STX start block:", cycleData[cycle].stxStartHeight);
+      // set the stacks end height if it's missing
+      if (!cycleData[cycle]?.stxEndHeight) {
+        const btcHeight = cycleData[cycle].btcEndHeight;
+        if (btcHeight) {
+          // get the corresponding stacks block height for the bitcoin block
+          const stxHeight = await getStxBlockHeight(btcHeight);
+          cycleData[cycle].stxEndHeight = stxHeight;
+        }
+      }
+      console.log("STX end block:", cycleData[cycle].stxEndHeight);
     }
   }
   // save cycle data to file
@@ -362,8 +400,12 @@ async function prepareCCIP016PayoutData(
   // and add to appropriate cycle as tx
   for (const cycle in cycleData) {
     const cycleNumber = Number(cycle);
-    const cycleStxHeight = cycleData[cycleNumber].stxHeight;
-    if (!cycleStxHeight) {
+    const cycleStxStartHeight = cycleData[cycleNumber].stxStartHeight;
+    if (!cycleStxStartHeight) {
+      continue;
+    }
+    const cycleEndStxHeight = cycleData[cycleNumber].stxEndHeight;
+    if (!cycleEndStxHeight) {
       continue;
     }
     // find the payouts for the cycle
@@ -399,13 +441,13 @@ async function prepareCCIP016PayoutData(
       miaPayoutCycle: cycleNumber,
       miaPayoutHeight: miaPayout?.block_height || null,
       miaPayoutHeightDiff: miaPayout
-        ? Math.abs(miaPayout.block_height - cycleStxHeight)
+        ? miaPayout.block_height - cycleEndStxHeight
         : null,
       nycPayoutAmount: Number(nycPayoutAmount) || null,
       nycPayoutCycle: cycleNumber,
       nycPayoutHeight: nycPayout?.block_height || null,
       nycPayoutHeightDiff: nycPayout
-        ? Math.abs(nycPayout.block_height - cycleStxHeight)
+        ? nycPayout.block_height - cycleEndStxHeight
         : null,
     };
   }
@@ -455,10 +497,10 @@ async function main() {
     missingData = false;
     for (const cycle in cycleData) {
       if (
-        !cycleData[cycle].btcHeight ||
-        !cycleData[cycle].stxHeight ||
-        cycleData[cycle].btcHeight === null ||
-        cycleData[cycle].stxHeight === null
+        !cycleData[cycle]?.btcStartHeight ||
+        !cycleData[cycle]?.btcEndHeight ||
+        !cycleData[cycle]?.stxStartHeight ||
+        !cycleData[cycle]?.stxEndHeight
       ) {
         missingData = true;
       }
@@ -501,21 +543,25 @@ async function main() {
   printDivider();
   console.log("Total CCD007 transactions:", ccd007Transactions.length);
   console.log("Total CCD011 transactions:", ccd011Transactions.length);
+  console.log("Total CCD011 payout transactions:", payoutTransactions.length);
   printDivider();
   // create a markdown table of the cycle data and payout data, per cycle
-  let markdownTable = `| Cycle | BTC Height | STX Height | MIA Payout Height | MIA Height Diff | MIA Payout Amount | NYC Payout Height | NYC Height Diff | NYC Payout Amount |`;
-  markdownTable += `\n| --- | --- | --- | --- | --- | --- | --- | --- | --- |`;
+  let markdownTable = `# CCIP-016 Cycle Analysis`;
+  markdownTable += `\n| Cycle | BTC Start Height | BTC End Height | STX Start Height | STX End Height |  MIA Payout Height | MIA Height Diff | MIA Payout Amount | NYC Payout Height | NYC Height Diff | NYC Payout Amount |`;
+  markdownTable += `\n| --- | --- | --- | --- | --- | --- | --- | --- | --- | --- | --- |`;
   for (const cycle in cycleData) {
     const cycleNumber = Number(cycle);
-    const btcHeight = cycleData[cycleNumber].btcHeight;
-    const stxHeight = cycleData[cycleNumber].stxHeight;
+    const btcStartHeight = cycleData[cycleNumber].btcStartHeight;
+    const btcEndHeight = cycleData[cycleNumber].btcEndHeight;
+    const stxStartHeight = cycleData[cycleNumber].stxStartHeight;
+    const stxEndHeight = cycleData[cycleNumber].stxEndHeight;
     const miaPayoutHeight = payoutData[cycleNumber].miaPayoutHeight;
     const miaHeightDiff = payoutData[cycleNumber].miaPayoutHeightDiff;
     const miaPayoutAmount = payoutData[cycleNumber].miaPayoutAmount;
     const nycPayoutHeight = payoutData[cycleNumber].nycPayoutHeight;
     const nycHeightDiff = payoutData[cycleNumber].nycPayoutHeightDiff;
     const nycPayoutAmount = payoutData[cycleNumber].nycPayoutAmount;
-    markdownTable += `\n| ${cycleNumber} | ${btcHeight} | ${stxHeight} | ${miaPayoutHeight} | ${miaHeightDiff} | ${miaPayoutAmount} | ${nycPayoutHeight} | ${nycHeightDiff} | ${nycPayoutAmount} |`;
+    markdownTable += `\n| ${cycleNumber} | ${btcStartHeight} - ${btcEndHeight} | ${stxStartHeight} - ${stxEndHeight} | ${miaPayoutHeight} | ${miaHeightDiff} | ${miaPayoutAmount} | ${nycPayoutHeight} | ${nycHeightDiff} | ${nycPayoutAmount} |`;
   }
 
   // print the markdown table
@@ -528,8 +574,9 @@ async function main() {
     "utf-8"
   );
 
-  //console.log("Cycle data:", cycleData);
-  //console.log("Payout data:", payoutData);
+  printDivider();
+  console.log("Cycle data:", cycleData);
+  console.log("Payout data:", payoutData);
 
   printDivider();
   console.log("Analysis complete.");
