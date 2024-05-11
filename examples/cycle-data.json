@@ -1,152 +1,182 @@
 {
   "54": {
-    "btcHeight": 779450,
-    "stxHeight": 97453,
-    "payoutHeight": null
+    "btcStartHeight": 779450,
+    "btcEndHeight": 781550,
+    "stxStartHeight": 97453,
+    "stxEndHeight": 99112
   },
   "55": {
-    "btcHeight": 781550,
-    "stxHeight": 99112,
-    "payoutHeight": null
+    "btcStartHeight": 781550,
+    "btcEndHeight": 783650,
+    "stxStartHeight": 99112,
+    "stxEndHeight": 100670
   },
   "56": {
-    "btcHeight": 783650,
-    "stxHeight": 100670,
-    "payoutHeight": null
+    "btcStartHeight": 783650,
+    "btcEndHeight": 785750,
+    "stxStartHeight": 100670,
+    "stxEndHeight": 102356
   },
   "57": {
-    "btcHeight": 785750,
-    "stxHeight": 102356,
-    "payoutHeight": null
+    "btcStartHeight": 785750,
+    "btcEndHeight": 787850,
+    "stxStartHeight": 102356,
+    "stxEndHeight": 104060
   },
   "58": {
-    "btcHeight": 787850,
-    "stxHeight": 104060,
-    "payoutHeight": null
+    "btcStartHeight": 787850,
+    "btcEndHeight": 789950,
+    "stxStartHeight": 104060,
+    "stxEndHeight": 105687
   },
   "59": {
-    "btcHeight": 789950,
-    "stxHeight": 105687,
-    "payoutHeight": null
+    "btcStartHeight": 789950,
+    "btcEndHeight": 792050,
+    "stxStartHeight": 105687,
+    "stxEndHeight": 107473
   },
   "60": {
-    "btcHeight": 792050,
-    "stxHeight": 107473,
-    "payoutHeight": null
+    "btcStartHeight": 792050,
+    "btcEndHeight": 794150,
+    "stxStartHeight": 107473,
+    "stxEndHeight": 109189
   },
   "61": {
-    "btcHeight": 794150,
-    "stxHeight": 109189,
-    "payoutHeight": null
+    "btcStartHeight": 794150,
+    "btcEndHeight": 796250,
+    "stxStartHeight": 109189,
+    "stxEndHeight": 110979
   },
   "62": {
-    "btcHeight": 796250,
-    "stxHeight": 110979,
-    "payoutHeight": null
+    "btcStartHeight": 796250,
+    "btcEndHeight": 798350,
+    "stxStartHeight": 110979,
+    "stxEndHeight": 112809
   },
   "63": {
-    "btcHeight": 798350,
-    "stxHeight": 112809,
-    "payoutHeight": null
+    "btcStartHeight": 798350,
+    "btcEndHeight": 800450,
+    "stxStartHeight": 112809,
+    "stxEndHeight": 114689
   },
   "64": {
-    "btcHeight": 800450,
-    "stxHeight": 114689,
-    "payoutHeight": null
+    "btcStartHeight": 800450,
+    "btcEndHeight": 802550,
+    "stxStartHeight": 114689,
+    "stxEndHeight": 116486
   },
   "65": {
-    "btcHeight": 802550,
-    "stxHeight": 116486,
-    "payoutHeight": null
+    "btcStartHeight": 802550,
+    "btcEndHeight": 804650,
+    "stxStartHeight": 116486,
+    "stxEndHeight": 118283
   },
   "66": {
-    "btcHeight": 804650,
-    "stxHeight": 118283,
-    "payoutHeight": null
+    "btcStartHeight": 804650,
+    "btcEndHeight": 806750,
+    "stxStartHeight": 118283,
+    "stxEndHeight": 120101
   },
   "67": {
-    "btcHeight": 806750,
-    "stxHeight": 120101,
-    "payoutHeight": null
+    "btcStartHeight": 806750,
+    "btcEndHeight": 808850,
+    "stxStartHeight": 120101,
+    "stxEndHeight": 121908
   },
   "68": {
-    "btcHeight": 808850,
-    "stxHeight": 121908,
-    "payoutHeight": null
+    "btcStartHeight": 808850,
+    "btcEndHeight": 810950,
+    "stxStartHeight": 121908,
+    "stxEndHeight": 123725
   },
   "69": {
-    "btcHeight": 810950,
-    "stxHeight": 123725,
-    "payoutHeight": null
+    "btcStartHeight": 810950,
+    "btcEndHeight": 813050,
+    "stxStartHeight": 123725,
+    "stxEndHeight": 125515
   },
   "70": {
-    "btcHeight": 813050,
-    "stxHeight": 125515,
-    "payoutHeight": null
+    "btcStartHeight": 813050,
+    "btcEndHeight": 815150,
+    "stxStartHeight": 125515,
+    "stxEndHeight": 127251
   },
   "71": {
-    "btcHeight": 815150,
-    "stxHeight": 127251,
-    "payoutHeight": null
+    "btcStartHeight": 815150,
+    "btcEndHeight": 817250,
+    "stxStartHeight": 127251,
+    "stxEndHeight": 128894
   },
   "72": {
-    "btcHeight": 817250,
-    "stxHeight": 128894,
-    "payoutHeight": null
+    "btcStartHeight": 817250,
+    "btcEndHeight": 819350,
+    "stxStartHeight": 128894,
+    "stxEndHeight": 130575
   },
   "73": {
-    "btcHeight": 819350,
-    "stxHeight": 130575,
-    "payoutHeight": null
+    "btcStartHeight": 819350,
+    "btcEndHeight": 821450,
+    "stxStartHeight": 130575,
+    "stxEndHeight": 132196
   },
   "74": {
-    "btcHeight": 821450,
-    "stxHeight": 132196,
-    "payoutHeight": null
+    "btcStartHeight": 821450,
+    "btcEndHeight": 823550,
+    "stxStartHeight": 132196,
+    "stxEndHeight": 133807
   },
   "75": {
-    "btcHeight": 823550,
-    "stxHeight": 133807,
-    "payoutHeight": null
+    "btcStartHeight": 823550,
+    "btcEndHeight": 825650,
+    "stxStartHeight": 133807,
+    "stxEndHeight": 135513
   },
   "76": {
-    "btcHeight": 825650,
-    "stxHeight": 135513,
-    "payoutHeight": null
+    "btcStartHeight": 825650,
+    "btcEndHeight": 827750,
+    "stxStartHeight": 135513,
+    "stxEndHeight": 137300
   },
   "77": {
-    "btcHeight": 827750,
-    "stxHeight": 137300,
-    "payoutHeight": null
+    "btcStartHeight": 827750,
+    "btcEndHeight": 829850,
+    "stxStartHeight": 137300,
+    "stxEndHeight": 138938
   },
   "78": {
-    "btcHeight": 829850,
-    "stxHeight": 138938,
-    "payoutHeight": null
+    "btcStartHeight": 829850,
+    "btcEndHeight": 831950,
+    "stxStartHeight": 138938,
+    "stxEndHeight": 140625
   },
   "79": {
-    "btcHeight": 831950,
-    "stxHeight": 140625,
-    "payoutHeight": null
+    "btcStartHeight": 831950,
+    "btcEndHeight": 834050,
+    "stxStartHeight": 140625,
+    "stxEndHeight": 142301
   },
   "80": {
-    "btcHeight": 834050,
-    "stxHeight": 142301,
-    "payoutHeight": null
+    "btcStartHeight": 834050,
+    "btcEndHeight": 836150,
+    "stxStartHeight": 142301,
+    "stxEndHeight": 143989
   },
   "81": {
-    "btcHeight": 836150,
-    "stxHeight": 143989,
-    "payoutHeight": null
+    "btcStartHeight": 836150,
+    "btcEndHeight": 838250,
+    "stxStartHeight": 143989,
+    "stxEndHeight": 145643
   },
   "82": {
-    "btcHeight": 838250,
-    "stxHeight": 145643,
-    "payoutHeight": null
+    "btcStartHeight": 838250,
+    "btcEndHeight": 840350,
+    "stxStartHeight": 145643,
+    "stxEndHeight": 147282
   },
   "83": {
-    "btcHeight": 840350,
-    "stxHeight": 147282,
-    "payoutHeight": null
+    "btcStartHeight": 840350,
+    "btcEndHeight": 842450,
+    "stxStartHeight": 147282,
+    "stxEndHeight": 149154
   }
 }
