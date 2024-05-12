@@ -29,7 +29,6 @@ const btcToStxEndpoint = "/extended/v2/burn-blocks";
 // https://github.com/citycoins/governance/blob/feat/add-ccip-022/ccips/ccip-020/ccip-020-graceful-protocol-shutdown.md
 const startCycle = 54;
 const endCycle = 83;
-const cycleLength = 2100; // in Stacks blocks
 
 //////////////////////////////////////////////////
 //
@@ -67,6 +66,14 @@ interface PayoutData {
     nycPayoutCycle: number | null;
     nycPayoutHeight: number | null;
     nycPayoutHeightDiff: number | null;
+  };
+}
+
+// object to store the missed payout transactions
+interface MissedPayouts {
+  [key: number]: {
+    mia: Transaction[];
+    nyc: Transaction[];
   };
 }
 
@@ -444,6 +451,86 @@ async function prepareCCIP016PayoutData(
   return payoutData;
 }
 
+async function analyzeMissedPayouts(
+  cycleData: CycleData,
+  payoutData: PayoutData
+) {
+  // load CCD007 transactions for the cycle
+  const contractName = "ccd007-citycoin-stacking";
+  const transactionFile = `results/${contractName}-transactions.json`;
+  let existingTransactions: Transaction[] = [];
+  try {
+    const fileData = await readFile(transactionFile, "utf-8");
+    existingTransactions = JSON.parse(fileData);
+    console.log(
+      `Loaded ${existingTransactions.length} transactions from file for ${contractName}`
+    );
+  } catch (error) {
+    if (
+      error instanceof Error &&
+      isNodeError(error) &&
+      error.code === "ENOENT"
+    ) {
+      console.log(
+        `No existing transactions file found for ${contractName}, starting fresh...`
+      );
+    } else {
+      console.error(
+        `Error loading transactions from file for ${contractName}:`,
+        error
+      );
+    }
+  }
+  // create objects to store missed payouts
+  const missedPayouts: MissedPayouts = {};
+  // loop through each cycle
+  for (const cycle in cycleData) {
+    // get the relevant data for the cycle
+    const cycleNumber = Number(cycle);
+    const cycleEndStxHeight = cycleData[cycleNumber].stxEndHeight;
+    const miaPayoutHeight = payoutData[cycleNumber].miaPayoutHeight;
+    const nycPayoutHeight = payoutData[cycleNumber].nycPayoutHeight;
+    // check that all expected values exist
+    if (!cycleEndStxHeight || !miaPayoutHeight || !nycPayoutHeight) {
+      console.log(`Missing data for cycle ${cycleNumber}, skipping...`);
+      continue;
+    }
+    // find the stacking transactions for the cycle
+    // that call "claim-stacking-reward" and occurred between the stxEndHeight and the payout height
+    const stackingTransactions = existingTransactions.filter(
+      (tx) =>
+        tx.tx_type === "contract_call" &&
+        tx.contract_call.function_name === "claim-stacking-reward" &&
+        tx.block_height &&
+        tx.block_height > cycleEndStxHeight &&
+        tx.block_height < miaPayoutHeight
+    );
+    console.log(
+      `${stackingTransactions.length} stacking transactions found in range for cycle ${cycleNumber}`
+    );
+    // add any missed transactions to the list based on the city
+    const missedMiaPayouts = stackingTransactions.filter(
+      (tx) =>
+        tx.tx_type === "contract_call" &&
+        tx.contract_call.function_name === "claim-stacking-reward" &&
+        tx.contract_call.function_args &&
+        tx.contract_call.function_args[0].repr === "mia"
+    );
+    const missedNycPayouts = stackingTransactions.filter(
+      (tx) =>
+        tx.tx_type === "contract_call" &&
+        tx.contract_call.function_name === "claim-stacking-reward" &&
+        tx.contract_call.function_args &&
+        tx.contract_call.function_args[0].repr === "nyc"
+    );
+    missedPayouts[cycleNumber] = {
+      mia: missedMiaPayouts,
+      nyc: missedNycPayouts,
+    };
+  }
+  return missedPayouts;
+}
+
 //////////////////////////////////////////////////
 //
 // Main function
@@ -542,6 +629,14 @@ async function main() {
     cycleData
   );
 
+  // find the stacking transactions for claim-stacking-reward
+  // that occurred between the stxEndHeight and the payout height for each city
+  // to determine if the payout was missed
+  printDivider();
+  console.log("Analyzing missed payouts...");
+  printDivider();
+  const missedPayouts = await analyzeMissedPayouts(cycleData, payoutData);
+
   // run analysis
   printDivider();
   console.log("Running analysis...");
@@ -550,7 +645,13 @@ async function main() {
   console.log("Total CCD011 transactions:", ccd011Transactions.length);
   console.log("Total CCD011 payout transactions:", payoutTransactions.length);
   printDivider();
-  // create a markdown table of the cycle data and payout data, per cycle
+  console.log("Cycle data:", cycleData);
+  printDivider();
+  console.log("Payout data:", payoutData);
+  printDivider();
+  console.log("Missed payouts:", missedPayouts);
+  printDivider();
+  // create a markdown table of the analysis data
   let markdownTable = `# CCIP-016 Cycle Analysis`;
   markdownTable += `\n| Cycle | BTC Start Height | BTC End Height | STX Start Height | STX End Height |  MIA Payout Height | MIA Height Diff | MIA Payout Amount | NYC Payout Height | NYC Height Diff | NYC Payout Amount |`;
   markdownTable += `\n| --- | --- | --- | --- | --- | --- | --- | --- | --- | --- | --- |`;
@@ -578,10 +679,6 @@ async function main() {
     markdownTable,
     "utf-8"
   );
-
-  printDivider();
-  console.log("Cycle data:", cycleData);
-  console.log("Payout data:", payoutData);
   printDivider();
   console.log("Analysis complete.");
   printDivider();
