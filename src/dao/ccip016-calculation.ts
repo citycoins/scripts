@@ -272,6 +272,10 @@ async function getStxBlockHeight(
       return btcToStxData.results[0].height;
     }
     if (retriesLeft > 0) {
+      console.log(
+        "No STX block found, retrying for BTC block:",
+        currentBtcHeight + 1
+      );
       return tryGetStxBlockHeight(currentBtcHeight + 1, retriesLeft - 1);
     }
     return null;
@@ -279,24 +283,9 @@ async function getStxBlockHeight(
   return tryGetStxBlockHeight(btcHeight, maxRetries);
 }
 
-async function prepareCCIP016BlockHeights() {
-  // load cycle data from file
-  let cycleData: CycleData = {};
-  try {
-    const fileData = await readFile(cycleFile, "utf-8");
-    cycleData = JSON.parse(fileData);
-    console.log(`Loaded cycle data from file`);
-  } catch (error) {
-    if (
-      error instanceof Error &&
-      isNodeError(error) &&
-      error.code === "ENOENT"
-    ) {
-      console.log("No existing block heights file found, starting fresh...");
-    } else {
-      console.error("Error loading block heights from file:", error);
-    }
-  }
+async function prepareCCIP016BlockHeights(
+  cycleData: CycleData
+): Promise<CycleData> {
   // check if all cycles have data
   const missingCycles: number[] = [];
   // loop through each cycle to check for missing data
@@ -308,9 +297,6 @@ async function prepareCCIP016BlockHeights() {
       !cycleData[cycle]?.stxStartHeight ||
       !cycleData[cycle]?.stxEndHeight
     ) {
-      printDivider();
-      console.log(`Missing data for cycle ${cycle}`);
-      console.log(cycleData[cycle]);
       missingCycles.push(cycle);
     }
   }
@@ -491,13 +477,28 @@ async function main() {
   printDivider();
   console.log("Preparing CCIP016 block heights...");
   printDivider();
-  const cycleData = await prepareCCIP016BlockHeights();
+  let cycleData: CycleData = {};
+  try {
+    const fileData = await readFile(cycleFile, "utf-8");
+    cycleData = JSON.parse(fileData);
+    console.log(`Loaded cycle data from file`);
+  } catch (error) {
+    if (
+      error instanceof Error &&
+      isNodeError(error) &&
+      error.code === "ENOENT"
+    ) {
+      console.log("No existing block heights file found, starting fresh...");
+    } else {
+      console.error("Error loading block heights from file:", error);
+    }
+  }
+  cycleData = await prepareCCIP016BlockHeights(cycleData);
 
   // if there are any null values in cycleData
   // repeat until the null values are filled in
-  let missingData = true;
-  while (missingData) {
-    missingData = false;
+  while (true) {
+    let missingData = false;
     for (const cycle in cycleData) {
       if (
         !cycleData[cycle]?.btcStartHeight ||
@@ -507,18 +508,14 @@ async function main() {
       ) {
         printDivider();
         console.log("Missing data found in cycle", cycle, "retrying...");
-        console.log(cycleData[cycle]);
         missingData = true;
+        break;
       }
     }
-    if (missingData) {
-      printDivider();
-      console.log("Missing data found, retrying...");
-      printDivider();
-      console.log("calling self");
-      await prepareCCIP016BlockHeights();
-      console.log("called self");
+    if (!missingData) {
+      break;
     }
+    cycleData = await prepareCCIP016BlockHeights(cycleData);
   }
 
   // populate the payout data
@@ -585,7 +582,6 @@ async function main() {
   printDivider();
   console.log("Cycle data:", cycleData);
   console.log("Payout data:", payoutData);
-
   printDivider();
   console.log("Analysis complete.");
   printDivider();
