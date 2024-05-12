@@ -308,6 +308,9 @@ async function prepareCCIP016BlockHeights() {
       !cycleData[cycle]?.stxStartHeight ||
       !cycleData[cycle]?.stxEndHeight
     ) {
+      printDivider();
+      console.log(`Missing data for cycle ${cycle}`);
+      console.log(cycleData[cycle]);
       missingCycles.push(cycle);
     }
   }
@@ -502,6 +505,9 @@ async function main() {
         !cycleData[cycle]?.stxStartHeight ||
         !cycleData[cycle]?.stxEndHeight
       ) {
+        printDivider();
+        console.log("Missing data found in cycle", cycle, "retrying...");
+        console.log(cycleData[cycle]);
         missingData = true;
       }
     }
@@ -509,7 +515,9 @@ async function main() {
       printDivider();
       console.log("Missing data found, retrying...");
       printDivider();
+      console.log("calling self");
       await prepareCCIP016BlockHeights();
+      console.log("called self");
     }
   }
 
@@ -561,7 +569,7 @@ async function main() {
     const nycPayoutHeight = payoutData[cycleNumber].nycPayoutHeight;
     const nycHeightDiff = payoutData[cycleNumber].nycPayoutHeightDiff;
     const nycPayoutAmount = payoutData[cycleNumber].nycPayoutAmount;
-    markdownTable += `\n| ${cycleNumber} | ${btcStartHeight} - ${btcEndHeight} | ${stxStartHeight} - ${stxEndHeight} | ${miaPayoutHeight} | ${miaHeightDiff} | ${miaPayoutAmount} | ${nycPayoutHeight} | ${nycHeightDiff} | ${nycPayoutAmount} |`;
+    markdownTable += `\n| ${cycleNumber} | ${btcStartHeight} | ${btcEndHeight} | ${stxStartHeight} | ${stxEndHeight} | ${miaPayoutHeight} | ${miaHeightDiff} | ${miaPayoutAmount} | ${nycPayoutHeight} | ${nycHeightDiff} | ${nycPayoutAmount} |`;
   }
 
   // print the markdown table
