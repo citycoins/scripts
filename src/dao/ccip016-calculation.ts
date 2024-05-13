@@ -72,8 +72,8 @@ interface PayoutData {
 // object to store the missed payout transactions
 interface MissedPayouts {
   [key: number]: {
-    mia: Transaction[];
-    nyc: Transaction[];
+    mia: ContractCallTransaction[];
+    nyc: ContractCallTransaction[];
   };
 }
 
@@ -521,31 +521,31 @@ async function analyzeMissedPayouts(
         tx.block_height &&
         tx.block_height > cycleEndStxHeight &&
         tx.block_height < miaPayoutHeight
-    );
+    ) as ContractCallTransaction[];
     console.log(
       `${stackingTransactions.length} stacking transactions found in range for cycle ${cycleNumber}`
     );
-    console.log(stackingTransactions[0]);
-    // add any missed transactions to the list based on the city
+    // find the missed payouts from those stacking transactions and separate by city
     const missedMiaPayouts = stackingTransactions.filter(
       (tx) =>
         tx.tx_type === "contract_call" &&
         tx.contract_call.function_name === "claim-stacking-reward" &&
         tx.contract_call.function_args &&
-        tx.contract_call.function_args[0].repr === "mia"
-    );
+        tx.contract_call.function_args[0].repr === '"mia"'
+    ) as ContractCallTransaction[];
     const missedNycPayouts = stackingTransactions.filter(
       (tx) =>
         tx.tx_type === "contract_call" &&
         tx.contract_call.function_name === "claim-stacking-reward" &&
         tx.contract_call.function_args &&
-        tx.contract_call.function_args[0].repr === "nyc"
-    );
+        tx.contract_call.function_args[0].repr === '"nyc"'
+    ) as ContractCallTransaction[];
     missedPayouts[cycleNumber] = {
       mia: missedMiaPayouts,
       nyc: missedNycPayouts,
     };
   }
+
   return missedPayouts;
 }
 
@@ -651,7 +651,10 @@ async function main() {
   printDivider();
   console.log("Analyzing missed payouts...");
   printDivider();
-  const missedPayouts = await analyzeMissedPayouts(cycleData, payoutData);
+  const missedPayoutTransactions = await analyzeMissedPayouts(
+    cycleData,
+    payoutData
+  );
 
   // run analysis
   printDivider();
@@ -665,7 +668,7 @@ async function main() {
   printDivider();
   //console.log("Payout data:", payoutData);
   printDivider();
-  console.log("Missed payouts:", missedPayouts);
+  console.log("Missed payout transactions:", missedPayoutTransactions);
   printDivider();
   // create a markdown table of the analysis data
   let markdownTable = `# CCIP-016 Cycle Analysis`;
