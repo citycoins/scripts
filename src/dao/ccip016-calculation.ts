@@ -38,7 +38,7 @@ const endCycle = 83;
 //////////////////////////////////////////////////
 
 // file paths
-const cycleFile = "./results/cycle-data.json";
+const cycleFilePath = "./results/cycle-data.json";
 
 // object to store the cycle data
 // this needs to include start/end BTC heights (since STX isn't 100% 1:1)
@@ -145,27 +145,16 @@ async function fetchTransactions(
 
   // Load transactions from file if available
   let existingTransactions: Transaction[] = [];
-  try {
-    const fileData = await readFile(transactionFile, "utf-8");
-    existingTransactions = JSON.parse(fileData);
+  const existingTransactionsFile = await getFile(transactionFile);
+  if (existingTransactionsFile) {
+    existingTransactions = JSON.parse(existingTransactionsFile);
     console.log(
       `Loaded ${existingTransactions.length} transactions from file for ${contractName}`
     );
-  } catch (error) {
-    if (
-      error instanceof Error &&
-      isNodeError(error) &&
-      error.code === "ENOENT"
-    ) {
-      console.log(
-        `No existing transactions file found for ${contractName}, starting fresh...`
-      );
-    } else {
-      console.error(
-        `Error loading transactions from file for ${contractName}:`,
-        error
-      );
-    }
+  } else {
+    console.log(
+      `No existing transactions file found for ${contractName}, starting fresh...`
+    );
   }
 
   // Check count against total in API
@@ -382,7 +371,7 @@ async function prepareCCIP016BlockHeights(
     }
   }
   // save cycle data to file
-  await writeFile(cycleFile, JSON.stringify(cycleData, null, 2), "utf-8");
+  await writeFile(cycleFilePath, JSON.stringify(cycleData, null, 2), "utf-8");
   // return cycle data
   return cycleData;
 }
@@ -473,29 +462,18 @@ async function analyzeMissedPayouts(
 ) {
   // load CCD007 transactions for the cycle
   const contractName = "ccd007-citycoin-stacking";
-  const transactionFile = `results/${contractName}-transactions.json`;
+  const transactionFilePath = `results/${contractName}-transactions.json`;
   let existingTransactions: Transaction[] = [];
-  try {
-    const fileData = await readFile(transactionFile, "utf-8");
-    existingTransactions = JSON.parse(fileData);
+  const existingTransactionsFile = await getFile(transactionFilePath);
+  if (existingTransactionsFile) {
+    existingTransactions = JSON.parse(existingTransactionsFile);
     console.log(
       `Loaded ${existingTransactions.length} transactions from file for ${contractName}`
     );
-  } catch (error) {
-    if (
-      error instanceof Error &&
-      isNodeError(error) &&
-      error.code === "ENOENT"
-    ) {
-      console.log(
-        `No existing transactions file found for ${contractName}, starting fresh...`
-      );
-    } else {
-      console.error(
-        `Error loading transactions from file for ${contractName}:`,
-        error
-      );
-    }
+  } else {
+    console.log(
+      `No existing transactions file found for ${contractName}, starting fresh...`
+    );
   }
   // create objects to store missed payouts
   const missedPayouts: MissedPayouts = {};
@@ -556,6 +534,23 @@ async function analyzeMissedPayouts(
 //
 //////////////////////////////////////////////////
 
+async function getFile(path: string) {
+  try {
+    const fileData = await readFile(path, "utf-8");
+    return fileData;
+  } catch (error) {
+    if (
+      error instanceof Error &&
+      isNodeError(error) &&
+      error.code === "ENOENT"
+    ) {
+      return null;
+    } else {
+      throw error;
+    }
+  }
+}
+
 async function main() {
   const contractDeployer = "SP8A9HZ3PKST0S42VM9523Z9NV42SZ026V4K39WH";
   let contractName = "";
@@ -583,20 +578,12 @@ async function main() {
   console.log("Preparing CCIP016 block heights...");
   printDivider();
   let cycleData: CycleData = {};
-  try {
-    const fileData = await readFile(cycleFile, "utf-8");
-    cycleData = JSON.parse(fileData);
-    console.log(`Loaded cycle data from file`);
-  } catch (error) {
-    if (
-      error instanceof Error &&
-      isNodeError(error) &&
-      error.code === "ENOENT"
-    ) {
-      console.log("No existing block heights file found, starting fresh...");
-    } else {
-      console.error("Error loading block heights from file:", error);
-    }
+  const cycleDataFile = await getFile(cycleFilePath);
+  if (cycleDataFile) {
+    console.log("Loading cycle data from file...");
+    cycleData = JSON.parse(cycleDataFile);
+  } else {
+    console.log("No cycle data file found, starting fresh...");
   }
   cycleData = await prepareCCIP016BlockHeights(cycleData);
 
