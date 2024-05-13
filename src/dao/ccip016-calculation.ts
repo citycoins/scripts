@@ -4,7 +4,7 @@ import {
   Transaction,
   AddressTransactionsWithTransfersListResponse,
 } from "@stacks/stacks-blockchain-api-types";
-import { readFile, writeFile } from "fs/promises";
+import { mkdir, readFile, writeFile } from "fs/promises";
 
 //////////////////////////////////////////////////
 //
@@ -626,6 +626,24 @@ async function analyzeMissedPayouts(
 async function main() {
   const contractDeployer = "SP8A9HZ3PKST0S42VM9523Z9NV42SZ026V4K39WH";
   let contractName = "";
+
+  // make sure ./results folder exists
+  try {
+    await mkdir("./results");
+    console.log("Created results folder.");
+  } catch (error) {
+    if (
+      error instanceof Error &&
+      isNodeError(error) &&
+      error.code === "EEXIST"
+    ) {
+      console.log("Verified results folder exists.");
+      return;
+    } else {
+      console.log("Error creating results folder.");
+      throw error;
+    }
+  }
 
   // get all of the transactions for CCD007
   contractName = "ccd007-citycoin-stacking";
