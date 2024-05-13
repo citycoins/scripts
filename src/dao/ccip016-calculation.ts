@@ -8,9 +8,17 @@ import { readFile, writeFile } from "fs/promises";
 
 //////////////////////////////////////////////////
 //
+// CCIP-016 Calculation Script
 // Downloads all transactions and performs analysis for CCIP-016
 // Designed to run and produce independently verifiable results
 // https://github.com/citycoins/governance/pull/16
+//
+//////////////////////////////////////////////////
+
+//////////////////////////////////////////////////
+//
+// CONFIGURATION
+// Constants and configuration for the script.
 //
 //////////////////////////////////////////////////
 
@@ -22,6 +30,7 @@ const ccApiBase = "https://protocol.citycoins.co/api";
 // expects query param cycle
 const firstBlockEndpoint =
   "/ccd007-citycoin-stacking/get-first-block-in-reward-cycle";
+
 // endpoint to get stacks block for bitcoin block
 const btcToStxEndpoint = "/extended/v2/burn-blocks";
 
@@ -30,15 +39,18 @@ const btcToStxEndpoint = "/extended/v2/burn-blocks";
 const startCycle = 54;
 const endCycle = 83;
 
-//////////////////////////////////////////////////
-//
-// Helper functions
-// Tools and logic reused elsewhere in the script.
-//
-//////////////////////////////////////////////////
+// file path for cycle data
+const cycleFilePath = "./results/ccip016-cycle-data.json";
 
-// file paths
-const cycleFilePath = "./results/cycle-data.json";
+// maximum number of retries for fetching data
+const maxFetchRetries = 3;
+
+//////////////////////////////////////////////////
+//
+// Data structures
+// Objects to store the data for analysis
+//
+//////////////////////////////////////////////////
 
 // object to store the cycle data
 // this needs to include start/end BTC heights (since STX isn't 100% 1:1)
@@ -77,17 +89,33 @@ interface MissedPayouts {
   };
 }
 
-// simple sleep function
+//////////////////////////////////////////////////
+//
+// Helper functions
+// Tools and logic reused elsewhere in the script.
+//
+//////////////////////////////////////////////////
+
+/**
+ * Asynchronous sleep function.
+ * @param ms The number of milliseconds to sleep.
+ */
 async function sleep(ms: number) {
   await new Promise((resolve) => setTimeout(resolve, ms));
 }
 
-// fetch function with retries
-const maxRetries = 3;
+/**
+ * Fancy fetch function that retries on failure.
+ * @param url The URL to fetch from.
+ * @param json Whether to parse the response as JSON or text.
+ * @param retries (default: 3) The maximum number of retries to attempt.
+ * @param attempts (default: 1) The current attempt number.
+ * @returns The response data with the provided type T.
+ */
 async function fancyFetch<T>(
   url: string,
   json = true,
-  retries = maxRetries,
+  retries = maxFetchRetries,
   attempts = 1
 ): Promise<T> {
   try {
@@ -120,9 +148,33 @@ async function fancyFetch<T>(
 const isNodeError = (error: Error): error is NodeJS.ErrnoException =>
   error instanceof Error;
 
-// print a divider to the console
+/**
+ * Print a consistent divider to the console.
+ */
 function printDivider() {
   console.log("-------------------------");
+}
+
+/**
+ * Get the contents of a file.
+ * @param path the path to the file.
+ * @returns fileData if found, null if file not found, or throws an error.
+ */
+async function getFile(path: string) {
+  try {
+    const fileData = await readFile(path, "utf-8");
+    return fileData;
+  } catch (error) {
+    if (
+      error instanceof Error &&
+      isNodeError(error) &&
+      error.code === "ENOENT"
+    ) {
+      return null;
+    } else {
+      throw error;
+    }
+  }
 }
 
 //////////////////////////////////////////////////
@@ -141,7 +193,7 @@ async function fetchTransactions(
   contractPrincipal: string
 ): Promise<Transaction[]> {
   const contractName = contractPrincipal.split(".")[1];
-  const transactionFile = `results/${contractName}-transactions.json`;
+  const transactionFile = `./results/ccip016-${contractName}-transactions.json`;
 
   // Load transactions from file if available
   let existingTransactions: Transaction[] = [];
@@ -249,12 +301,12 @@ async function fetchTransactions(
 /**
  * Get the Stacks block height for a given Bitcoin block height.
  * @param btcHeight Bitcoin block height
- * @param maxRetries Maximum number of retries to attempt
+ * @param maxFetchRetries Maximum number of retries to attempt
  * @returns Stacks block height if found, otherwise null.
  */
 async function getStxBlockHeight(
   btcHeight: number,
-  maxRetries: number = 5
+  maxFetchRetries: number = 5
 ): Promise<number | null> {
   async function tryGetStxBlockHeight(
     currentBtcHeight: number,
@@ -276,7 +328,7 @@ async function getStxBlockHeight(
     }
     return null;
   }
-  return tryGetStxBlockHeight(btcHeight, maxRetries);
+  return tryGetStxBlockHeight(btcHeight, maxFetchRetries);
 }
 
 async function prepareCCIP016BlockHeights(
@@ -383,6 +435,12 @@ async function prepareCCIP016BlockHeights(
 //
 //////////////////////////////////////////////////
 
+/**
+ * Prepare the payout data for CCIP016 based on the CCD011 transactions.
+ * @param payoutTransactions An array of CCD011 transactions.
+ * @param cycleData The cycle data object with block heights per cycle.
+ * @returns The payout data object with payout amounts and heights per cycle.
+ */
 async function prepareCCIP016PayoutData(
   payoutTransactions: ContractCallTransaction[],
   cycleData: CycleData
@@ -445,6 +503,12 @@ async function prepareCCIP016PayoutData(
         : null,
     };
   }
+  // save payout data to a file
+  await writeFile(
+    "./results/ccip016-payout-data.json",
+    JSON.stringify(payoutData, null, 2),
+    "utf-8"
+  );
   // return the data
   return payoutData;
 }
@@ -456,13 +520,19 @@ async function prepareCCIP016PayoutData(
 //
 //////////////////////////////////////////////////
 
+/**
+ * Analyze the missed payouts for each cycle.
+ * @param cycleData The cycle data object with block heights per cycle.
+ * @param payoutData The payout data object with payout amounts and heights per cycle.
+ * @returns The missed payouts object with missed transactions per cycle.
+ */
 async function analyzeMissedPayouts(
   cycleData: CycleData,
   payoutData: PayoutData
 ) {
   // load CCD007 transactions for the cycle
   const contractName = "ccd007-citycoin-stacking";
-  const transactionFilePath = `results/${contractName}-transactions.json`;
+  const transactionFilePath = `results/ccip016-${contractName}-transactions.json`;
   let existingTransactions: Transaction[] = [];
   const existingTransactionsFile = await getFile(transactionFilePath);
   if (existingTransactionsFile) {
@@ -524,6 +594,13 @@ async function analyzeMissedPayouts(
     };
   }
 
+  // save missed payouts to a file
+  await writeFile(
+    "./results/ccip016-missed-payouts.json",
+    JSON.stringify(missedPayouts, null, 2),
+    "utf-8"
+  );
+
   return missedPayouts;
 }
 
@@ -533,23 +610,6 @@ async function analyzeMissedPayouts(
 // Runs the logic for the script using functions above.
 //
 //////////////////////////////////////////////////
-
-async function getFile(path: string) {
-  try {
-    const fileData = await readFile(path, "utf-8");
-    return fileData;
-  } catch (error) {
-    if (
-      error instanceof Error &&
-      isNodeError(error) &&
-      error.code === "ENOENT"
-    ) {
-      return null;
-    } else {
-      throw error;
-    }
-  }
-}
 
 async function main() {
   const contractDeployer = "SP8A9HZ3PKST0S42VM9523Z9NV42SZ026V4K39WH";
@@ -651,11 +711,17 @@ async function main() {
   console.log("Total CCD011 transactions:", ccd011Transactions.length);
   console.log("Total CCD011 payout transactions:", payoutTransactions.length);
   printDivider();
-  //console.log("Cycle data:", cycleData);
+  console.log("Cycle data:");
   printDivider();
-  //console.log("Payout data:", payoutData);
+  console.log(cycleData);
   printDivider();
-  console.log("Missed payout transactions:", missedPayoutTransactions);
+  console.log("Payout data:");
+  printDivider();
+  console.log(payoutData);
+  printDivider();
+  console.log("Missed payout transactions:");
+  printDivider();
+  console.log(missedPayoutTransactions);
   printDivider();
   // create a markdown table of the analysis data
   let markdownTable = `# CCIP-016 Cycle Analysis`;
@@ -677,7 +743,9 @@ async function main() {
   }
 
   // print the markdown table
-  //console.log(markdownTable);
+  console.log("Markdown Table:");
+  printDivider();
+  console.log(markdownTable);
 
   // save the markdown table to a file
   await writeFile(
