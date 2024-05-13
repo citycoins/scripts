@@ -722,6 +722,7 @@ async function main() {
   console.log("Total CCD007 transactions:", ccd007Transactions.length);
   console.log("Total CCD011 transactions:", ccd011Transactions.length);
   console.log("Total CCD011 payout transactions:", payoutTransactions.length);
+
   printDivider();
   console.log("Cycle data:");
   printDivider();
@@ -744,7 +745,15 @@ async function main() {
       cycleData[cycleNumber].stxEndHeight?.toLocaleString() ?? null;
     markdownCycleData += `\n| ${cycleNumber} | ${btcStartHeight} | ${btcEndHeight} | ${stxStartHeight} | ${stxEndHeight} |`;
   }
+  // save markdown to a file
+  await writeFile(
+    "./results/ccip016-cycle-data.md",
+    markdownCycleData,
+    "utf-8"
+  );
+  // output markdown table
   console.log(markdownCycleData);
+
   printDivider();
   console.log("Payout data:");
   printDivider();
@@ -773,42 +782,18 @@ async function main() {
       : null;
     markdownPayoutData += `\n| ${cycleNumber} | ${miaPayoutHeight} | ${miaHeightDiff} | ${miaPayoutAmount} | ${nycPayoutHeight} | ${nycHeightDiff} | ${nycPayoutAmount} |`;
   }
+  // save markdown to a file
+  await writeFile(
+    "./results/ccip016-payout-data.md",
+    markdownPayoutData,
+    "utf-8"
+  );
+  // output markdown table
   console.log(markdownPayoutData);
   printDivider();
   console.log("Missed payout transactions:");
   printDivider();
-  //console.log(missedPayoutTransactions);
-  printDivider();
-  // create a markdown table of the analysis data
-  let markdownTable = `# CCIP-016 Cycle Analysis`;
-  markdownTable += `\n| Cycle | BTC Start Height | BTC End Height | STX Start Height | STX End Height |  MIA Payout Height | MIA Height Diff | MIA Payout Amount | NYC Payout Height | NYC Height Diff | NYC Payout Amount |`;
-  markdownTable += `\n| --- | --- | --- | --- | --- | --- | --- | --- | --- | --- | --- |`;
-  for (const cycle in cycleData) {
-    const cycleNumber = Number(cycle);
-    const btcStartHeight = cycleData[cycleNumber].btcStartHeight;
-    const btcEndHeight = cycleData[cycleNumber].btcEndHeight;
-    const stxStartHeight = cycleData[cycleNumber].stxStartHeight;
-    const stxEndHeight = cycleData[cycleNumber].stxEndHeight;
-    const miaPayoutHeight = payoutData[cycleNumber].miaPayoutHeight;
-    const miaHeightDiff = payoutData[cycleNumber].miaPayoutHeightDiff;
-    const miaPayoutAmount = payoutData[cycleNumber].miaPayoutAmount;
-    const nycPayoutHeight = payoutData[cycleNumber].nycPayoutHeight;
-    const nycHeightDiff = payoutData[cycleNumber].nycPayoutHeightDiff;
-    const nycPayoutAmount = payoutData[cycleNumber].nycPayoutAmount;
-    markdownTable += `\n| ${cycleNumber} | ${btcStartHeight} | ${btcEndHeight} | ${stxStartHeight} | ${stxEndHeight} | ${miaPayoutHeight} | ${miaHeightDiff} | ${miaPayoutAmount} | ${nycPayoutHeight} | ${nycHeightDiff} | ${nycPayoutAmount} |`;
-  }
-
-  // print the markdown table
-  console.log("Markdown Table:");
-  printDivider();
-  //console.log(markdownTable);
-
-  // save the markdown table to a file
-  await writeFile(
-    "./results/ccip016-cycle-analysis.md",
-    markdownTable,
-    "utf-8"
-  );
+  console.log(missedPayoutTransactions);
   printDivider();
   console.log("Analysis complete.");
   printDivider();
