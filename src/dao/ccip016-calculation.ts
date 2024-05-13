@@ -387,6 +387,13 @@ async function prepareCCIP016BlockHeights(
   return cycleData;
 }
 
+//////////////////////////////////////////////////
+//
+// Payout data based on cycle data
+// Calculate the payouts for each cycle based on the CCD011 transactions
+//
+//////////////////////////////////////////////////
+
 async function prepareCCIP016PayoutData(
   payoutTransactions: ContractCallTransaction[],
   cycleData: CycleData
@@ -407,6 +414,7 @@ async function prepareCCIP016PayoutData(
     // find the payouts for the cycle
     const miaPayout = payoutTransactions.find(
       (tx) =>
+        tx.tx_status === "success" &&
         tx.contract_call.function_name === "send-stacking-reward-mia" &&
         tx.contract_call.function_args &&
         Number(tx.contract_call.function_args[0].repr.replace("u", "")) ===
@@ -414,6 +422,7 @@ async function prepareCCIP016PayoutData(
     );
     const nycPayout = payoutTransactions.find(
       (tx) =>
+        tx.tx_status === "success" &&
         tx.contract_call.function_name === "send-stacking-reward-nyc" &&
         tx.contract_call.function_args &&
         Number(tx.contract_call.function_args[0].repr.replace("u", "")) ===
@@ -450,6 +459,13 @@ async function prepareCCIP016PayoutData(
   // return the data
   return payoutData;
 }
+
+//////////////////////////////////////////////////
+//
+// Missed payouts analysis
+// Analyze the stacking transactions for missed payouts
+//
+//////////////////////////////////////////////////
 
 async function analyzeMissedPayouts(
   cycleData: CycleData,
@@ -499,6 +515,7 @@ async function analyzeMissedPayouts(
     // that call "claim-stacking-reward" and occurred between the stxEndHeight and the payout height
     const stackingTransactions = existingTransactions.filter(
       (tx) =>
+        tx.tx_status === "success" &&
         tx.tx_type === "contract_call" &&
         tx.contract_call.function_name === "claim-stacking-reward" &&
         tx.block_height &&
@@ -508,6 +525,7 @@ async function analyzeMissedPayouts(
     console.log(
       `${stackingTransactions.length} stacking transactions found in range for cycle ${cycleNumber}`
     );
+    console.log(stackingTransactions[0]);
     // add any missed transactions to the list based on the city
     const missedMiaPayouts = stackingTransactions.filter(
       (tx) =>
@@ -629,9 +647,7 @@ async function main() {
     cycleData
   );
 
-  // find the stacking transactions for claim-stacking-reward
-  // that occurred between the stxEndHeight and the payout height for each city
-  // to determine if the payout was missed
+  /// idenfity missing payouts from stacking transactions using cycle data
   printDivider();
   console.log("Analyzing missed payouts...");
   printDivider();
@@ -645,9 +661,9 @@ async function main() {
   console.log("Total CCD011 transactions:", ccd011Transactions.length);
   console.log("Total CCD011 payout transactions:", payoutTransactions.length);
   printDivider();
-  console.log("Cycle data:", cycleData);
+  //console.log("Cycle data:", cycleData);
   printDivider();
-  console.log("Payout data:", payoutData);
+  //console.log("Payout data:", payoutData);
   printDivider();
   console.log("Missed payouts:", missedPayouts);
   printDivider();
@@ -671,7 +687,7 @@ async function main() {
   }
 
   // print the markdown table
-  console.log(markdownTable);
+  //console.log(markdownTable);
 
   // save the markdown table to a file
   await writeFile(
