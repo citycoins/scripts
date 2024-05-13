@@ -45,6 +45,9 @@ const cycleFilePath = "./results/ccip016-cycle-data.json";
 // maximum number of retries for fetching data
 const maxFetchRetries = 3;
 
+// 6 decimals for Stacks
+const stxDecimals = 10 ** 6;
+
 //////////////////////////////////////////////////
 //
 // Data structures
@@ -95,6 +98,15 @@ interface MissedPayouts {
 // Tools and logic reused elsewhere in the script.
 //
 //////////////////////////////////////////////////
+
+/**
+ * Display a microSTX amount in STX.
+ * @param stx The microSTX amount.
+ * @returns The STX amount as a string divided by set decimals.
+ */
+function displayMicro(stx: number) {
+  return `${(stx / stxDecimals).toFixed(6)} STX`;
+}
 
 /**
  * Asynchronous sleep function.
@@ -713,15 +725,59 @@ async function main() {
   printDivider();
   console.log("Cycle data:");
   printDivider();
+  // output JSON data
   console.log(cycleData);
+  // output markdown table
+  printDivider();
+  let markdownCycleData = `### CCIP-016 Cycle Data`;
+  markdownCycleData += `\n| Cycle | BTC Start Height | BTC End Height | STX Start Height | STX End Height |`;
+  markdownCycleData += `\n| --- | --- | --- | --- | --- |`;
+  for (const cycle in cycleData) {
+    const cycleNumber = Number(cycle);
+    const btcStartHeight =
+      cycleData[cycleNumber].btcStartHeight?.toLocaleString() ?? null;
+    const btcEndHeight =
+      cycleData[cycleNumber].btcEndHeight?.toLocaleString() ?? null;
+    const stxStartHeight =
+      cycleData[cycleNumber].stxStartHeight?.toLocaleString() ?? null;
+    const stxEndHeight =
+      cycleData[cycleNumber].stxEndHeight?.toLocaleString() ?? null;
+    markdownCycleData += `\n| ${cycleNumber} | ${btcStartHeight} | ${btcEndHeight} | ${stxStartHeight} | ${stxEndHeight} |`;
+  }
+  console.log(markdownCycleData);
   printDivider();
   console.log("Payout data:");
   printDivider();
+  // output JSON data
   console.log(payoutData);
+  // output markdown table
+  printDivider();
+  let markdownPayoutData = `### CCIP-016 Payout Data`;
+  markdownPayoutData += `\n| Cycle | MIA Payout Height | MIA Height Diff | MIA Payout Amount | NYC Payout Height | NYC Height Diff | NYC Payout Amount |`;
+  markdownPayoutData += `\n| --- | --- | --- | --- | --- | --- | --- |`;
+  for (const cycle in cycleData) {
+    const cycleNumber = Number(cycle);
+    const miaPayoutHeight =
+      payoutData[cycleNumber].miaPayoutHeight?.toLocaleString() ?? null;
+    const miaHeightDiff =
+      payoutData[cycleNumber].miaPayoutHeightDiff?.toLocaleString() ?? null;
+    const miaPayoutAmount = payoutData[cycleNumber].miaPayoutAmount
+      ? displayMicro(payoutData[cycleNumber].miaPayoutAmount!)
+      : null;
+    const nycPayoutHeight =
+      payoutData[cycleNumber].nycPayoutHeight?.toLocaleString() ?? null;
+    const nycHeightDiff =
+      payoutData[cycleNumber].nycPayoutHeightDiff?.toLocaleString() ?? null;
+    const nycPayoutAmount = payoutData[cycleNumber].nycPayoutAmount
+      ? displayMicro(payoutData[cycleNumber].nycPayoutAmount!)
+      : null;
+    markdownPayoutData += `\n| ${cycleNumber} | ${miaPayoutHeight} | ${miaHeightDiff} | ${miaPayoutAmount} | ${nycPayoutHeight} | ${nycHeightDiff} | ${nycPayoutAmount} |`;
+  }
+  console.log(markdownPayoutData);
   printDivider();
   console.log("Missed payout transactions:");
   printDivider();
-  console.log(missedPayoutTransactions);
+  //console.log(missedPayoutTransactions);
   printDivider();
   // create a markdown table of the analysis data
   let markdownTable = `# CCIP-016 Cycle Analysis`;
@@ -745,7 +801,7 @@ async function main() {
   // print the markdown table
   console.log("Markdown Table:");
   printDivider();
-  console.log(markdownTable);
+  //console.log(markdownTable);
 
   // save the markdown table to a file
   await writeFile(
