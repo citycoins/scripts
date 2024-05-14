@@ -580,7 +580,9 @@ async function analyzeMissedPayouts(
         tx.contract_call.function_name === "claim-stacking-reward" &&
         tx.block_height &&
         tx.block_height > cycleEndStxHeight &&
-        tx.block_height < miaPayoutHeight
+        tx.block_height < miaPayoutHeight &&
+        tx.contract_call.function_args &&
+        tx.contract_call.function_args[1].repr === `u${cycleNumber}`
     ) as ContractCallTransaction[];
     console.log(
       `${stackingTransactions.length} stacking transactions found in range for cycle ${cycleNumber}`
