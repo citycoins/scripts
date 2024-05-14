@@ -1,0 +1,182 @@
+{
+  "54": {
+    "btcStartHeight": 779450,
+    "btcEndHeight": 781550,
+    "stxStartHeight": 97453,
+    "stxEndHeight": 99112
+  },
+  "55": {
+    "btcStartHeight": 781550,
+    "btcEndHeight": 783650,
+    "stxStartHeight": 99112,
+    "stxEndHeight": 100670
+  },
+  "56": {
+    "btcStartHeight": 783650,
+    "btcEndHeight": 785750,
+    "stxStartHeight": 100670,
+    "stxEndHeight": 102356
+  },
+  "57": {
+    "btcStartHeight": 785750,
+    "btcEndHeight": 787850,
+    "stxStartHeight": 102356,
+    "stxEndHeight": 104060
+  },
+  "58": {
+    "btcStartHeight": 787850,
+    "btcEndHeight": 789950,
+    "stxStartHeight": 104060,
+    "stxEndHeight": 105687
+  },
+  "59": {
+    "btcStartHeight": 789950,
+    "btcEndHeight": 792050,
+    "stxStartHeight": 105687,
+    "stxEndHeight": 107473
+  },
+  "60": {
+    "btcStartHeight": 792050,
+    "btcEndHeight": 794150,
+    "stxStartHeight": 107473,
+    "stxEndHeight": 109189
+  },
+  "61": {
+    "btcStartHeight": 794150,
+    "btcEndHeight": 796250,
+    "stxStartHeight": 109189,
+    "stxEndHeight": 110979
+  },
+  "62": {
+    "btcStartHeight": 796250,
+    "btcEndHeight": 798350,
+    "stxStartHeight": 110979,
+    "stxEndHeight": 112809
+  },
+  "63": {
+    "btcStartHeight": 798350,
+    "btcEndHeight": 800450,
+    "stxStartHeight": 112809,
+    "stxEndHeight": 114689
+  },
+  "64": {
+    "btcStartHeight": 800450,
+    "btcEndHeight": 802550,
+    "stxStartHeight": 114689,
+    "stxEndHeight": 116486
+  },
+  "65": {
+    "btcStartHeight": 802550,
+    "btcEndHeight": 804650,
+    "stxStartHeight": 116486,
+    "stxEndHeight": 118283
+  },
+  "66": {
+    "btcStartHeight": 804650,
+    "btcEndHeight": 806750,
+    "stxStartHeight": 118283,
+    "stxEndHeight": 120101
+  },
+  "67": {
+    "btcStartHeight": 806750,
+    "btcEndHeight": 808850,
+    "stxStartHeight": 120101,
+    "stxEndHeight": 121908
+  },
+  "68": {
+    "btcStartHeight": 808850,
+    "btcEndHeight": 810950,
+    "stxStartHeight": 121908,
+    "stxEndHeight": 123725
+  },
+  "69": {
+    "btcStartHeight": 810950,
+    "btcEndHeight": 813050,
+    "stxStartHeight": 123725,
+    "stxEndHeight": 125515
+  },
+  "70": {
+    "btcStartHeight": 813050,
+    "btcEndHeight": 815150,
+    "stxStartHeight": 125515,
+    "stxEndHeight": 127251
+  },
+  "71": {
+    "btcStartHeight": 815150,
+    "btcEndHeight": 817250,
+    "stxStartHeight": 127251,
+    "stxEndHeight": 128894
+  },
+  "72": {
+    "btcStartHeight": 817250,
+    "btcEndHeight": 819350,
+    "stxStartHeight": 128894,
+    "stxEndHeight": 130575
+  },
+  "73": {
+    "btcStartHeight": 819350,
+    "btcEndHeight": 821450,
+    "stxStartHeight": 130575,
+    "stxEndHeight": 132196
+  },
+  "74": {
+    "btcStartHeight": 821450,
+    "btcEndHeight": 823550,
+    "stxStartHeight": 132196,
+    "stxEndHeight": 133807
+  },
+  "75": {
+    "btcStartHeight": 823550,
+    "btcEndHeight": 825650,
+    "stxStartHeight": 133807,
+    "stxEndHeight": 135513
+  },
+  "76": {
+    "btcStartHeight": 825650,
+    "btcEndHeight": 827750,
+    "stxStartHeight": 135513,
+    "stxEndHeight": 137300
+  },
+  "77": {
+    "btcStartHeight": 827750,
+    "btcEndHeight": 829850,
+    "stxStartHeight": 137300,
+    "stxEndHeight": 138938
+  },
+  "78": {
+    "btcStartHeight": 829850,
+    "btcEndHeight": 831950,
+    "stxStartHeight": 138938,
+    "stxEndHeight": 140625
+  },
+  "79": {
+    "btcStartHeight": 831950,
+    "btcEndHeight": 834050,
+    "stxStartHeight": 140625,
+    "stxEndHeight": 142301
+  },
+  "80": {
+    "btcStartHeight": 834050,
+    "btcEndHeight": 836150,
+    "stxStartHeight": 142301,
+    "stxEndHeight": 143989
+  },
+  "81": {
+    "btcStartHeight": 836150,
+    "btcEndHeight": 838250,
+    "stxStartHeight": 143989,
+    "stxEndHeight": 145643
+  },
+  "82": {
+    "btcStartHeight": 838250,
+    "btcEndHeight": 840350,
+    "stxStartHeight": 145643,
+    "stxEndHeight": 147282
+  },
+  "83": {
+    "btcStartHeight": 840350,
+    "btcEndHeight": 842450,
+    "stxStartHeight": 147282,
+    "stxEndHeight": 149154
+  }
+}
