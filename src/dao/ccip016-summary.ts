@@ -1,43 +1,37 @@
-import { ContractCallTransaction } from "@stacks/stacks-blockchain-api-types";
+import {
+  ContractCallTransaction,
+  PostConditionFungible,
+} from "@stacks/stacks-blockchain-api-types";
 import { readFile } from "fs/promises";
-
-interface MissedPayouts {
-  [key: number]: {
-    mia: ContractCallTransaction[];
-    nyc: ContractCallTransaction[];
-  };
-}
+import { MissedPayouts, PayoutData } from "./ccip016-calculation";
 
 async function main() {
   // read missed payouts from file
   const missedPayouts = (await readFile(
     "./results/ccip016-missed-payouts.json"
   ).then((content) => JSON.parse(content.toString()))) as MissedPayouts;
+  const payoutData = (await readFile("./results/ccip016-payout-data.json").then(
+    (content) => JSON.parse(content.toString())
+  )) as PayoutData;
 
   for (let cycle of Object.keys(missedPayouts)) {
     const cycleNumber = Number(cycle);
-    console.log(
-      cycle,
-      "mia",
-      missedPayouts[cycleNumber].mia
-        .filter(
-          (tx) =>
-            tx.contract_call.function_args &&
-            tx.contract_call.function_args[1].repr === `u${cycleNumber}`
-        )
-        .map((tx) => tx.sender_address)
-    );
-    console.log(
-      cycle,
-      "nyc",
-      missedPayouts[cycleNumber].nyc
-        .filter(
-          (tx) =>
-            tx.contract_call.function_args &&
-            tx.contract_call.function_args[1].repr === `u${cycleNumber}`
-        )
-        .map((tx) => tx.sender_address)
-    );
+
+    const toUser = (tx: ContractCallTransaction) => {
+      const user: { user?: string; cc?: number; stx?: number } = {};
+      const ccAmount = (tx.post_conditions[0] as PostConditionFungible).amount;
+      user.user = tx.sender_address;
+      user.cc = Number(ccAmount);
+      const payoutStxAmount = payoutData[cycleNumber].miaPayoutAmount!;
+      user.stx = payoutStxAmount;
+      return user;
+    };
+
+    const affectedAddressesMia = missedPayouts[cycleNumber].mia.map(toUser);
+    const affectedAddressesNyc = missedPayouts[cycleNumber].nyc.map(toUser);
+
+    console.log(cycle, "mia", affectedAddressesMia);
+    console.log(cycle, "nyc", affectedAddressesNyc);
   }
 }
 

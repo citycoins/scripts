@@ -69,7 +69,7 @@ interface CycleData {
 
 // object to store the payout data
 // derived from the CCD011 transactions
-interface PayoutData {
+export interface PayoutData {
   [key: number]: {
     // key: cycle number
     tx: ContractCallTransaction[];
@@ -85,7 +85,7 @@ interface PayoutData {
 }
 
 // object to store the missed payout transactions
-interface MissedPayouts {
+export interface MissedPayouts {
   [key: number]: {
     mia: ContractCallTransaction[];
     nyc: ContractCallTransaction[];
