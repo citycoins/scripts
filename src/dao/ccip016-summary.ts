@@ -53,18 +53,20 @@ async function main() {
       const ccAmount = (tx.post_conditions[0] as PostConditionFungible).amount;
       user.user = tx.sender_address;
       user.cc = Number(ccAmount);
-      const payoutStxAmount = payoutData[cycleNumber].miaPayoutAmount!;
       const arg0 = tx.contract_call?.function_args?.[0]?.repr;
       console.log(arg0);
       const isMia = arg0 === '"mia"';
       const totalCC = isMia ? miaTotalCC : nycTotalCC;
+      const payoutStxAmount = isMia
+        ? payoutData[cycleNumber].miaPayoutAmount!
+        : payoutData[cycleNumber].nycPayoutAmount!;
       user.stx = Math.floor((payoutStxAmount * user.cc) / totalCC);
       contractCodeMia += isMia
-        ? `(pay-rewards '${user.user} ${user.stx})\n`
+        ? `(contract-call? 'SP8A9HZ3PKST0S42VM9523Z9NV42SZ026V4K39WH.ccd002-treasury-mia-stacking withdraw-stx u${user.stx} '${user.user})\n`
         : "";
       contractCodeNyc += isMia
         ? ""
-        : `(pay-rewards '${user.user} ${user.stx})\n`;
+        : `(contract-call? 'SP8A9HZ3PKST0S42VM9523Z9NV42SZ026V4K39WH.ccd002-treasury-nyc-stacking withdraw-stx u${user.stx} '${user.user})\n`;
       totalMia += isMia ? user.stx || 0 : 0;
       totalNyc += isMia ? 0 : user.stx || 0;
       return user;
