@@ -593,8 +593,11 @@ async function analyzeMissedPayouts(
         tx.tx_type === "contract_call" &&
         tx.contract_call.function_name === "claim-stacking-reward" &&
         tx.block_height &&
-        tx.block_height > cycleEndStxHeight &&
-        tx.block_height < miaPayoutHeight &&
+        (cycleNumber === 83 || tx.block_height > cycleEndStxHeight) &&
+        ((tx.contract_call.function_args![0].repr === '"mia"' &&
+          tx.block_height < miaPayoutHeight) ||
+          (tx.contract_call.function_args![0].repr === '"nyc"' &&
+            tx.block_height < nycPayoutHeight)) &&
         tx.contract_call.function_args &&
         tx.contract_call.function_args[1].repr === `u${cycleNumber}`
     ) as ContractCallTransaction[];
