@@ -5,6 +5,20 @@ import {
   AddressTransactionsWithTransfersListResponse,
 } from "@stacks/stacks-blockchain-api-types";
 import { mkdir, readFile, writeFile } from "fs/promises";
+import { callReadOnlyFunction } from "micro-stacks/api";
+import {
+  ClarityValue,
+  cvToHex,
+  OptionalCV,
+  principalCV,
+  SomeCV,
+  TupleCV,
+  UIntCV,
+  uintCV,
+} from "micro-stacks/clarity";
+import { StacksMainnet } from "micro-stacks/network";
+import { StacksTransaction } from "micro-stacks/transactions";
+const network = new StacksMainnet({ url: "http://192.168.129.114:3999" });
 
 //////////////////////////////////////////////////
 //
@@ -87,8 +101,8 @@ export interface PayoutData {
 // object to store the missed payout transactions
 export interface MissedPayouts {
   [key: number]: {
-    mia: ContractCallTransaction[];
-    nyc: ContractCallTransaction[];
+    mia: { userStackingStats: number; tx: ContractCallTransaction }[];
+    nyc: { userStackingStats: number; tx: ContractCallTransaction }[];
   };
 }
 
@@ -602,9 +616,35 @@ async function analyzeMissedPayouts(
         tx.contract_call.function_args &&
         tx.contract_call.function_args[0].repr === '"nyc"'
     ) as ContractCallTransaction[];
+
+    // find user stacked cc
+    const miaCityId = 1;
+    const nycCityId = 2;
+    const missedMiaPayoutData: {
+      userStackingStats: number;
+      tx: ContractCallTransaction;
+    }[] = [];
+    for (const tx of missedMiaPayouts) {
+      const userStackingStats = await getUserStackingStats(miaCityId, tx);
+      missedMiaPayoutData.push({
+        userStackingStats,
+        tx,
+      });
+    }
+    const missedNycPayoutData: {
+      userStackingStats: number;
+      tx: ContractCallTransaction;
+    }[] = [];
+    for (const tx of missedNycPayouts) {
+      const userStackingStats = await getUserStackingStats(nycCityId, tx);
+      missedNycPayoutData.push({
+        userStackingStats,
+        tx,
+      });
+    }
     missedPayouts[cycleNumber] = {
-      mia: missedMiaPayouts,
-      nyc: missedNycPayouts,
+      mia: missedMiaPayoutData,
+      nyc: missedNycPayoutData,
     };
   }
 
@@ -618,6 +658,52 @@ async function analyzeMissedPayouts(
   return missedPayouts;
 }
 
+/**
+ * Get user stacking stats from a transaction.
+ * @param cityId The city ID for the transaction.
+ * @param tx The transaction object.
+ * @returns The user stacking stats object.
+ */
+async function getUserStackingStats(
+  cityId: number,
+  tx: ContractCallTransaction
+): Promise<number> {
+  const [contractAddress, contractName] =
+    tx.contract_call.contract_id.split(".");
+  const cycleId = tx.contract_call.function_args![1].repr.replace("u", "");
+  const userId = (await callReadOnlyFunction({
+    contractAddress,
+    contractName: "ccd003-user-registry",
+    functionName: "get-user-id",
+    functionArgs: [principalCV(tx.sender_address)],
+    network: network,
+  })) as SomeCV<UIntCV>;
+  const blockInfo = await getBlockInfo(tx.block_height - 1);
+  const tip = blockInfo.index_block_hash.substring(2);
+  const functionArgs = [
+    uintCV(cityId),
+    uintCV(cycleId),
+    uintCV(userId.value.value),
+  ];
+  const userStackingStats = (await callReadOnlyFunction({
+    contractAddress,
+    contractName,
+    functionName: "get-stacker",
+    functionArgs,
+    network: network,
+    tip,
+  })) as TupleCV<{ stacked: UIntCV; claimable: UIntCV }>;
+  return Number(userStackingStats.data.stacked.value);
+}
+
+async function getBlockInfo(blockHeight: number) {
+  const endpoint = `/extended/v2/blocks/${blockHeight}`;
+  const url = new URL(endpoint, hiroApiBase);
+  const response = await fancyFetch<{ index_block_hash: string }>(
+    url.toString()
+  );
+  return response;
+}
 //////////////////////////////////////////////////
 //
 // Main function
@@ -640,7 +726,7 @@ async function main() {
       error.code === "EEXIST"
     ) {
       console.log("Verified results folder exists.");
-      return;
+      //return;
     } else {
       console.log("Error creating results folder.");
       throw error;

@@ -44,17 +44,21 @@ async function main() {
     const miaTotalCC = await fetchStackingStats(cycleNumber, 1);
     const nycTotalCC = await fetchStackingStats(cycleNumber, 2);
 
-    const toUser = (tx: ContractCallTransaction) => {
+    const toUser = ({
+      userStackingStats,
+      tx,
+    }: {
+      userStackingStats: number;
+      tx: ContractCallTransaction;
+    }) => {
       const user: {
         user?: string;
         cc?: number;
         stx?: number;
       } = {};
-      const ccAmount = (tx.post_conditions[0] as PostConditionFungible).amount;
       user.user = tx.sender_address;
-      user.cc = Number(ccAmount);
+      user.cc = userStackingStats;
       const arg0 = tx.contract_call?.function_args?.[0]?.repr;
-      console.log(arg0);
       const isMia = arg0 === '"mia"';
       const totalCC = isMia ? miaTotalCC : nycTotalCC;
       const payoutStxAmount = isMia
@@ -62,11 +66,11 @@ async function main() {
         : payoutData[cycleNumber].nycPayoutAmount!;
       user.stx = Math.floor((payoutStxAmount * user.cc) / totalCC);
       contractCodeMia += isMia
-        ? `(contract-call? 'SP8A9HZ3PKST0S42VM9523Z9NV42SZ026V4K39WH.ccd002-treasury-mia-stacking withdraw-stx u${user.stx} '${user.user})\n`
+        ? `;; ${cycle}: ${payoutStxAmount} * ${user.cc} / ${totalCC}\n(try! (contract-call? 'SP8A9HZ3PKST0S42VM9523Z9NV42SZ026V4K39WH.ccd002-treasury-mia-stacking withdraw-stx u${user.stx} '${user.user}))\n`
         : "";
       contractCodeNyc += isMia
         ? ""
-        : `(contract-call? 'SP8A9HZ3PKST0S42VM9523Z9NV42SZ026V4K39WH.ccd002-treasury-nyc-stacking withdraw-stx u${user.stx} '${user.user})\n`;
+        : `;; ${cycle}: ${payoutStxAmount} * ${user.cc} / ${totalCC}\n(try! (contract-call? 'SP8A9HZ3PKST0S42VM9523Z9NV42SZ026V4K39WH.ccd002-treasury-nyc-stacking withdraw-stx u${user.stx} '${user.user}))\n`;
       totalMia += isMia ? user.stx || 0 : 0;
       totalNyc += isMia ? 0 : user.stx || 0;
       return user;
