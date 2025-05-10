@@ -12,6 +12,7 @@
     "cross-fetch": "^4.0.0",
     "micro-stacks": "^1.2.1",
     "node-fetch": "^3.3.2",
+    "pg": "^8.14.1",
     "prompts": "^2.4.2",
     "throttled-queue": "^2.1.4"
   },

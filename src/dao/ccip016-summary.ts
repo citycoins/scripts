@@ -1,12 +1,9 @@
-import {
-  ContractCallTransaction,
-  PostConditionFungible,
-} from "@stacks/stacks-blockchain-api-types";
+import { ContractCallTransaction } from "@stacks/stacks-blockchain-api-types";
 import { readFile } from "fs/promises";
 import { callReadOnlyFunction } from "micro-stacks/api";
 import { OptionalCV, TupleCV, UIntCV, uintCV } from "micro-stacks/clarity";
 import { StacksMainnet } from "micro-stacks/network";
-import { hiroApiBase, MissedPayouts, PayoutData } from "./ccip016-calculation";
+import { MissedPayouts, PayoutData } from "./ccip016-calculation";
 
 const network = new StacksMainnet({ url: hiroApiBase });
 

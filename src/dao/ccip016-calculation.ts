@@ -1,15 +1,12 @@
 import {
+  AddressTransactionsWithTransfersListResponse,
   BlockListResponse,
   ContractCallTransaction,
   Transaction,
-  AddressTransactionsWithTransfersListResponse,
 } from "@stacks/stacks-blockchain-api-types";
 import { mkdir, readFile, writeFile } from "fs/promises";
 import { callReadOnlyFunction } from "micro-stacks/api";
 import {
-  ClarityValue,
-  cvToHex,
-  OptionalCV,
   principalCV,
   SomeCV,
   TupleCV,
@@ -17,8 +14,6 @@ import {
   uintCV,
 } from "micro-stacks/clarity";
 import { StacksMainnet } from "micro-stacks/network";
-import { StacksTransaction } from "micro-stacks/transactions";
-const network = new StacksMainnet({ url: "http://192.168.129.114:3999" });
 
 //////////////////////////////////////////////////
 //
@@ -37,8 +32,9 @@ const network = new StacksMainnet({ url: "http://192.168.129.114:3999" });
 //////////////////////////////////////////////////
 
 // set API base urls
-const hiroApiBase = "https://api.mainnet.hiro.so";
+export const hiroApiBase = "https://api.mainnet.hiro.so";
 const ccApiBase = "https://protocol.citycoins.co/api";
+const network = new StacksMainnet({ url: hiroApiBase });
 
 // endpoint to get first bitcoin block in cycle
 // expects query param cycle
@@ -119,7 +115,11 @@ export interface MissedPayouts {
  * @returns The STX amount as a string divided by set decimals.
  */
 function displayMicro(stx: number) {
-  return `${(stx / stxDecimals).toFixed(6)} STX`;
+  return `${(stx / stxDecimals).toLocaleString("en-US", {
+    minimumFractionDigits: 6,
+    maximumFractionDigits: 6,
+    useGrouping: true,
+  })} STX`;
 }
 
 /**
